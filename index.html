@@ -106,10 +106,13 @@
     max-width: 464px; margin: 0 auto;
     background: var(--tint-dark); border-radius: 8px; overflow: hidden;
     display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px 8px;
-    transform: translateY(150%); transition: transform .3s cubic-bezier(.2,.8,.2,1), background .4s;
+    /* hidden: pushed fully below the screen, including the home-bar area */
+    transform: translateY(calc(100% + 24px + env(safe-area-inset-bottom)));
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), opacity .3s, visibility 0s .3s, background .4s;
     cursor: pointer;
   }
-  .mini.show { transform: none; }
+  .mini.show { transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: transform .3s cubic-bezier(.2,.8,.2,1), opacity .2s, background .4s; }
   .mini img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; flex: none; }
   .mini .info { flex: 1; min-width: 0; }
   .mini .t { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
