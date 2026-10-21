@@ -49,7 +49,7 @@ self.addEventListener("fetch", (e) => {
   // Page + album info: try the network first so edits show up, fall back to cache.
   if (req.mode === "navigate" || url.pathname.endsWith("album.js")) {
     e.respondWith(
-      fetch(req)
+      fetch(req, { cache: "no-cache" })   // always check for a newer version
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy));

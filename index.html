@@ -1167,7 +1167,8 @@
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (hadWorker && audio.paused && $("onboard").hidden) location.reload();
     });
-    navigator.serviceWorker.register("sw.js");
+    // Versioned URL + no HTTP cache, so a new version is always picked up
+    navigator.serviceWorker.register("sw.js?v=" + A.version, { updateViaCache: "none" });
     // Turn the download icon green once every song is saved on the phone
     const checkSaved = async () => {
       try {
