@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.ALBUM = {
-  version: 7,
+  version: 8,
 
   title: "For You",
   artist: "David",

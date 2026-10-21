@@ -134,7 +134,7 @@
   .np-top { display: flex; align-items: center; justify-content: space-between; height: 48px; }
   .np-top .from { text-align: center; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.75); }
   .np-top .from b { display: block; font-size: 13px; letter-spacing: 0; text-transform: none; color: #fff; margin-top: 2px; }
-  .np-cover { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; margin: 28px 0 32px; box-shadow: 0 16px 50px rgba(0,0,0,.45); display: block; }
+  .np-cover { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; margin: 28px 0 32px; box-shadow: 0 16px 50px rgba(0,0,0,.45); display: block; touch-action: pan-y; -webkit-user-drag: none; }
   .np-title-row { display: flex; align-items: center; gap: 16px; }
   .np-title-row .info { flex: 1; min-width: 0; }
   .np-title { font-size: 22px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -535,7 +535,7 @@
       <div class="from">Playing from album<b id="npAlbum"></b></div>
       <button aria-label="More"><svg class="ico fill" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
     </div>
-    <img class="np-cover" id="npCover" alt="">
+    <img class="np-cover" id="npCover" alt="" draggable="false">
     <div class="np-title-row">
       <div class="info"><div class="np-title" id="npTitle"></div><div class="np-artist" id="npArtist"></div></div>
       <button class="heart" id="heart" aria-label="Like">
@@ -781,6 +781,7 @@
   function start(i) { buildOrder(i); load(i, true); }
   function load(i, autoplay, back) {
     if (!back && current >= 0 && i !== current) history.push({ i: current, pos: curPos });
+    advancing = false; clearTimeout(endTimer); endTimer = null;
     current = i;
     curPos = pos;
     const t = A.tracks[i];
@@ -853,9 +854,29 @@
     clearTimeout(t._h);
     t._h = setTimeout(() => t.classList.remove("show"), 1800);
   }
-  audio.addEventListener("ended", () => {
-    if (repeat === 2) { audio.currentTime = 0; audio.play(); } else next(true);
+  // iPhone pauses a home-screen app the moment its audio stops, so waiting for
+  // "ended" means the next song only starts once the app is reopened. Instead,
+  // switch songs a fraction of a second before the end, while sound is still playing.
+  let advancing = false, endTimer = null;
+  function onTrackEnd() {
+    if (advancing) return;
+    advancing = true;
+    clearTimeout(endTimer); endTimer = null;
+    if (repeat === 2) { audio.currentTime = 0; audio.play(); advancing = false; }
+    else next(true);
+  }
+  audio.addEventListener("timeupdate", () => {
+    const left = (audio.duration - audio.currentTime) / (audio.playbackRate || 1);
+    if (audio.paused || !isFinite(left) || advancing || endTimer || left > 1.5) return;
+    endTimer = setTimeout(() => {
+      endTimer = null;
+      if (!audio.paused && audio.duration - audio.currentTime < 0.6) onTrackEnd();
+    }, Math.max(0, (left - 0.25) * 1000));
   });
+  const cancelEndTimer = () => { clearTimeout(endTimer); endTimer = null; };
+  audio.addEventListener("seeking", cancelEndTimer);
+  audio.addEventListener("pause", cancelEndTimer);
+  audio.addEventListener("ended", onTrackEnd);   // fallback
 
   function toggleLike(i) {
     const f = A.tracks[i].file;
@@ -873,31 +894,35 @@
   // Open / close the Now Playing screen
   const openNP = (open) => { $("np").classList.toggle("open", open); $("np").setAttribute("aria-hidden", !open); };
   $("mini").onclick = () => { if (!$("mini")._swiped) openNP(true); };
-  const mt = $("miniTrack");
-  swipeable($("mini"), {
-    move(dx) {
-      mt.style.transition = "none";
-      mt.style.transform = `translateX(${dx}px)`;
-      mt.style.opacity = 1 - Math.min(Math.abs(dx) / 220, .6);
-    },
-    end(dx) {
-      if (Math.abs(dx) < 70) {
-        mt.style.transition = "transform .25s, opacity .25s"; mt.style.transform = ""; mt.style.opacity = "";
-        return;
-      }
-      const left = dx < 0;   // swipe left = next, right = previous
-      mt.style.transition = "transform .16s ease-in, opacity .16s";
-      mt.style.transform = `translateX(${left ? -110 : 110}%)`; mt.style.opacity = 0;
-      setTimeout(() => {
-        left ? next(false) : prev(true);
-        mt.style.transition = "none";
-        mt.style.transform = `translateX(${left ? 60 : -60}%)`;
-        void mt.offsetWidth;
-        mt.style.transition = "transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s";
-        mt.style.transform = ""; mt.style.opacity = "";
-      }, 160);
-    },
-  });
+  // Swipe left = next song, right = previous, with a slide-out / slide-in animation
+  function swipeToChange(target, el, outPct, inPct) {
+    swipeable(target, {
+      move(dx) {
+        el.style.transition = "none";
+        el.style.transform = `translateX(${dx}px)`;
+        el.style.opacity = 1 - Math.min(Math.abs(dx) / 260, .6);
+      },
+      end(dx) {
+        if (Math.abs(dx) < 70) {
+          el.style.transition = "transform .25s, opacity .25s"; el.style.transform = ""; el.style.opacity = "";
+          return;
+        }
+        const left = dx < 0;
+        el.style.transition = "transform .16s ease-in, opacity .16s";
+        el.style.transform = `translateX(${left ? -outPct : outPct}%)`; el.style.opacity = 0;
+        setTimeout(() => {
+          left ? next(false) : prev(true);
+          el.style.transition = "none";
+          el.style.transform = `translateX(${left ? inPct : -inPct}%)`;
+          void el.offsetWidth;
+          el.style.transition = "transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s";
+          el.style.transform = ""; el.style.opacity = "";
+        }, 160);
+      },
+    });
+  }
+  swipeToChange($("mini"), $("miniTrack"), 110, 60);
+  swipeToChange($("npCover"), $("npCover"), 120, 70);
   $("npClose").onclick = () => openNP(false);
   let touchY = null;   // swipe down on the cover to close
   $("np").addEventListener("touchstart", (e) => { if ($("np").scrollTop <= 0 && !e.target.closest(".scrubber")) touchY = e.touches[0].clientY; }, { passive: true });
@@ -982,17 +1007,25 @@
       });
     } catch (e) {}
   }
-  if ("mediaSession" in navigator) {
+  // Lock screen shows ⏮ ⏭ (not ±10s) when the track handlers are set and the
+  // seek-by-10s ones are not. iOS can drop them when a song changes, so they're
+  // re-applied every time playback starts.
+  function setMediaHandlers() {
+    if (!("mediaSession" in navigator)) return;
     const ms = navigator.mediaSession;
     const on = (a, fn) => { try { ms.setActionHandler(a, fn); } catch (e) {} };
-    on("play", () => audio.play());
-    on("pause", () => audio.pause());
-    on("previoustrack", prev);
-    on("nexttrack", () => next(false));
-    on("seekto", (d) => { audio.currentTime = d.seekTime; updatePosition(); });
-    // Leaving these unset makes iOS show ⏮ ⏭ instead of ±10s buttons.
     on("seekbackward", null);
     on("seekforward", null);
+    on("play", () => audio.play());
+    on("pause", () => audio.pause());
+    on("previoustrack", () => prev());
+    on("nexttrack", () => next(false));
+    on("seekto", (d) => { audio.currentTime = d.seekTime; updatePosition(); });
+  }
+  if ("mediaSession" in navigator) {
+    setMediaHandlers();
+    audio.addEventListener("play", setMediaHandlers);
+    audio.addEventListener("loadedmetadata", setMediaHandlers);
     ["loadedmetadata", "play", "pause", "seeked", "ratechange"].forEach((ev) => audio.addEventListener(ev, updatePosition));
   }
 
