@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.ALBUM = {
-  version: 2,
+  version: 4,
 
   title: "For You",
   artist: "David",
@@ -15,10 +15,10 @@ self.ALBUM = {
 
   tracks: [
     {
-      title: "First Song",
-      file: "audio/01.m4a",
-      note: "The one I wrote the night we met.",
-      lyrics: "Placeholder lyrics…\nLine two goes here.",
+      title: "等雨停",
+      file: "audio/01.mp3",
+      note: "",
+      lyrics: "",
     },
     {
       title: "Second Song",
