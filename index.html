@@ -865,13 +865,30 @@
 
   // ── Playback ──
   function start(i) { buildOrder(i); load(i, true); }
+  // Whole songs are kept in memory (blob URLs). Resuming or skipping from the lock
+  // screen then never needs the app's offline service, which iOS may have put to sleep.
+  const songMem = {};
+  async function keepInMemory(i) {
+    const f = A.tracks[i] && A.tracks[i].file;
+    if (!f || songMem[f]) return;
+    try {
+      const res = await fetch(f);
+      if (!res.ok) return;
+      const type = res.headers.get("Content-Type") || (f.endsWith(".mp3") ? "audio/mpeg" : "audio/mp4");
+      songMem[f] = URL.createObjectURL(new Blob([await res.arrayBuffer()], { type }));
+    } catch (e) {}
+  }
+  async function keepAllInMemory() {
+    for (const i of albumOrder) await keepInMemory(i);
+  }
+
   function load(i, autoplay, back) {
     if (!back && current >= 0 && i !== current) history.push({ i: current, pos: curPos });
     advancing = false; clearTimeout(endTimer); endTimer = null;
     current = i;
     curPos = pos;
     const t = A.tracks[i];
-    audio.src = t.file;
+    audio.src = songMem[t.file] || t.file;
     $("miniTitle").textContent = $("npTitle").textContent = t.title;
     $("miniArtist").textContent = $("npArtist").textContent = A.artist;
     $("lyrics").textContent = t.lyrics || "";
@@ -1038,7 +1055,10 @@
     ["bigPlay", "npPlay", "miniPlay"].forEach((id) => $(id).setAttribute("aria-label", playing ? "Pause" : "Play"));
     rows.forEach((r) => r.classList.toggle("playing", playing));
     $("libAlbum").classList.toggle("playing", current >= 0);
-    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+    // playbackState is deliberately NOT set here. The app may be asleep when the
+    // lock screen pauses, and a stale "playing" would leave the lock screen
+    // showing ⏸ so pressing it again just pauses again. iOS reads the real
+    // state from the <audio> element instead.
   }
   audio.addEventListener("play", syncUI);
   audio.addEventListener("pause", syncUI);
@@ -1431,6 +1451,7 @@
 
   setView("library");
   if (!store.get("unwrapped", false) && A.welcome) showOnboarding();
+  setTimeout(keepAllInMemory, 1500);
 
   // ── Offline ──
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
