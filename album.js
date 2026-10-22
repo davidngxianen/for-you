@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.ALBUM = {
-  version: 10,
+  version: 12,
 
   title: "For You",
   artist: "David",
@@ -29,6 +29,12 @@ self.ALBUM = {
     {
       title: "天后",
       file: "audio/03.mp3",
+      note: "",
+      lyrics: "",
+    },
+    {
+      title: "連名帶姓",
+      file: "audio/04.mp3",
       note: "",
       lyrics: "",
     },
