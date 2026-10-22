@@ -941,6 +941,9 @@
     rows.forEach((r, j) => r.classList.toggle("active", j === i));
     $("mini").classList.add("show");
     $("dock").classList.add("show");
+    // Tell the lock screen the new state *before* the new song details arrive,
+    // so it draws them with the right ▶/⏸ (it may not redraw on the state alone)
+    if (autoplay && "mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
     setMeta(t);
     // Safari keeps an already-playing <audio> "playing" across a src change and
     // fires no play/pause event, so set the state and refresh ▶/⏸ ourselves.
