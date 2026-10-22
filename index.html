@@ -890,6 +890,15 @@
   // loop and remembers the spot; ▶ swaps the song back in at that spot. The app
   // keeps running, so the lock screen works. After 20 minutes it pauses for real
   // to save battery.
+  // Swap what the <audio> element is playing. Pausing first (then playing again in
+  // the same instant) gives iOS a real pause → play to react to; without it the
+  // lock screen keeps showing the old ▶/⏸ when the source changes mid-playback.
+  function swapSource(url, play) {
+    if (!audio.paused) audio.pause();
+    audio.src = url;
+    if (play) audio.play().catch(() => {});
+  }
+
   let soft = null;           // { file, time, dur } while paused this way
   let softTimer = null;
   const isPlaying = () => !audio.paused && !soft;
@@ -905,8 +914,7 @@
     soft = { file: A.tracks[current].file, time: audio.currentTime, dur: audio.duration };
     clearTimeout(endTimer); endTimer = null;
     audio.loop = true;
-    audio.src = songMem[SILENCE] || SILENCE;
-    audio.play().catch(() => {});
+    swapSource(songMem[SILENCE] || SILENCE, true);
     clearTimeout(softTimer);
     softTimer = setTimeout(() => audio.pause(), 20 * 60 * 1000);
     syncUI(); showTime(soft.time); updatePosition();
@@ -917,9 +925,8 @@
     const s = soft;
     soft = null; clearTimeout(softTimer);
     audio.loop = false;
-    audio.src = songMem[s.file] || s.file;
     audio.addEventListener("loadedmetadata", () => { audio.currentTime = s.time; }, { once: true });
-    audio.play().catch(() => {});
+    swapSource(songMem[s.file] || s.file, true);
     syncUI();
   }
 
@@ -930,7 +937,7 @@
     current = i;
     curPos = pos;
     const t = A.tracks[i];
-    audio.src = songMem[t.file] || t.file;
+    swapSource(songMem[t.file] || t.file, false);
     $("miniTitle").textContent = $("npTitle").textContent = t.title;
     $("miniArtist").textContent = $("npArtist").textContent = A.artist;
     $("lyrics").textContent = t.lyrics || "";
@@ -1103,7 +1110,15 @@
     $("libAlbum").classList.toggle("playing", current >= 0);
     // Tell the lock screen whether to show ▶ or ⏸ (during a pause the silent
     // loop is technically playing, so iOS can't work this out on its own)
-    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+    if ("mediaSession" in navigator) {
+      const state = playing ? "playing" : "paused";
+      if (navigator.mediaSession.playbackState !== state || syncUI.lastSong !== current) {
+        navigator.mediaSession.playbackState = state;
+        if (current >= 0) setMeta(A.tracks[current]);
+        updatePosition();
+      }
+      syncUI.lastSong = current;
+    }
   }
   audio.addEventListener("play", syncUI);
   audio.addEventListener("pause", syncUI);
