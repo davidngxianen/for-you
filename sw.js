@@ -4,7 +4,7 @@ importScripts("album.js");
 
 const CACHE = "album-v" + self.ALBUM.version;
 const SHELL = ["./", "index.html", "album.js", "manifest.webmanifest",
-  "icon-180.png", "icon-192.png", "icon-512.png", self.ALBUM.cover];
+  "icon-180.png", "icon-192.png", "icon-512.png", self.ALBUM.cover, "audio/silence.mp3"];
 const AUDIO = self.ALBUM.tracks.map((t) => t.file);
 const PHOTOS = (self.ALBUM.wrapped || []).map((s) => s.photo).filter(Boolean);
 

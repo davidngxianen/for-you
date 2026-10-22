@@ -868,8 +868,9 @@
   // Whole songs are kept in memory (blob URLs). Resuming or skipping from the lock
   // screen then never needs the app's offline service, which iOS may have put to sleep.
   const songMem = {};
-  async function keepInMemory(i) {
-    const f = A.tracks[i] && A.tracks[i].file;
+  const SILENCE = "audio/silence.mp3";
+  const keepInMemory = (i) => A.tracks[i] && memorize(A.tracks[i].file);
+  async function memorize(f) {
     if (!f || songMem[f]) return;
     try {
       const res = await fetch(f);
@@ -879,12 +880,53 @@
     } catch (e) {}
   }
   async function keepAllInMemory() {
+    await memorize(SILENCE);
     for (const i of albumOrder) await keepInMemory(i);
+  }
+
+  // ── Pausing without letting iOS freeze the app ──
+  // On iOS, a home-screen web app is frozen as soon as its audio stops, and the
+  // lock screen's ▶ can't wake it again. So "pause" swaps the song for a silent
+  // loop and remembers the spot; ▶ swaps the song back in at that spot. The app
+  // keeps running, so the lock screen works. After 20 minutes it pauses for real
+  // to save battery.
+  let soft = null;           // { file, time, dur } while paused this way
+  let softTimer = null;
+  const isPlaying = () => !audio.paused && !soft;
+  const songTime = () => (soft ? soft.time : audio.currentTime);
+  const songDur = () => (soft ? soft.dur : audio.duration);
+  function setSongTime(t) {
+    if (soft) { soft.time = t; showTime(t); updatePosition(); }
+    else audio.currentTime = t;
+  }
+  function pauseSong() {
+    if (soft || current < 0) return;
+    if (audio.paused) return syncUI();
+    soft = { file: A.tracks[current].file, time: audio.currentTime, dur: audio.duration };
+    clearTimeout(endTimer); endTimer = null;
+    audio.loop = true;
+    audio.src = songMem[SILENCE] || SILENCE;
+    audio.play().catch(() => {});
+    clearTimeout(softTimer);
+    softTimer = setTimeout(() => audio.pause(), 20 * 60 * 1000);
+    syncUI(); showTime(soft.time); updatePosition();
+  }
+  function resumeSong() {
+    if (current < 0) return;
+    if (!soft) { audio.play().catch(() => {}); return; }
+    const s = soft;
+    soft = null; clearTimeout(softTimer);
+    audio.loop = false;
+    audio.src = songMem[s.file] || s.file;
+    audio.addEventListener("loadedmetadata", () => { audio.currentTime = s.time; }, { once: true });
+    audio.play().catch(() => {});
+    syncUI();
   }
 
   function load(i, autoplay, back) {
     if (!back && current >= 0 && i !== current) history.push({ i: current, pos: curPos });
     advancing = false; clearTimeout(endTimer); endTimer = null;
+    if (soft) { soft = null; clearTimeout(softTimer); audio.loop = false; }
     current = i;
     curPos = pos;
     const t = A.tracks[i];
@@ -905,7 +947,7 @@
   function toggle() {
     if (current < 0 && queue.length) return start(takeQueued());
     if (current < 0) return start(shuffle ? Math.floor(Math.random() * N) : albumOrder[0]);
-    audio.paused ? audio.play() : audio.pause();
+    isPlaying() ? pauseSong() : resumeSong();
   }
   function next(auto) {
     if (current < 0) return toggle();
@@ -917,13 +959,13 @@
   // `force` skips the "restart if past 3 seconds" rule (used by the swipe)
   function prev(force) {
     if (current < 0) return toggle();
-    if (!force && audio.currentTime > 3) { audio.currentTime = 0; return; }
+    if (!force && songTime() > 3) { setSongTime(0); return; }
     if (!history.length) {
       // Nothing played before this song yet (e.g. it was tapped directly):
       // go to the song before it in the album, wrapping round when looping
       if (pos > 0) { pos--; return load(order[pos], true, true); }
       if (repeat === 1 && N > 1) { pos = N - 1; return load(order[pos], true, true); }
-      audio.currentTime = 0; return;
+      setSongTime(0); return;
     }
     const h = history.pop();
     pos = h.pos;
@@ -977,16 +1019,16 @@
   }
   audio.addEventListener("timeupdate", () => {
     const left = (audio.duration - audio.currentTime) / (audio.playbackRate || 1);
-    if (audio.paused || !isFinite(left) || advancing || endTimer || left > 1.5) return;
+    if (soft || audio.paused || !isFinite(left) || advancing || endTimer || left > 1.5) return;
     endTimer = setTimeout(() => {
       endTimer = null;
-      if (!audio.paused && audio.duration - audio.currentTime < 0.6) onTrackEnd();
+      if (!soft && !audio.paused && audio.duration - audio.currentTime < 0.6) onTrackEnd();
     }, Math.max(0, (left - 0.25) * 1000));
   });
   const cancelEndTimer = () => { clearTimeout(endTimer); endTimer = null; };
   audio.addEventListener("seeking", cancelEndTimer);
   audio.addEventListener("pause", cancelEndTimer);
-  audio.addEventListener("ended", onTrackEnd);   // fallback
+  audio.addEventListener("ended", () => { if (!soft) onTrackEnd(); });   // fallback
 
   function toggleLike(i) {
     const f = A.tracks[i].file;
@@ -1050,15 +1092,14 @@
   }, { passive: true });
 
   function syncUI() {
-    const playing = !audio.paused;
+    const playing = isPlaying();
     $$(".pp").forEach((p) => p.setAttribute("d", playing ? PAUSE : PLAY));
     ["bigPlay", "npPlay", "miniPlay"].forEach((id) => $(id).setAttribute("aria-label", playing ? "Pause" : "Play"));
     rows.forEach((r) => r.classList.toggle("playing", playing));
     $("libAlbum").classList.toggle("playing", current >= 0);
-    // playbackState is deliberately NOT set here. The app may be asleep when the
-    // lock screen pauses, and a stale "playing" would leave the lock screen
-    // showing ⏸ so pressing it again just pauses again. iOS reads the real
-    // state from the <audio> element instead.
+    // Tell the lock screen whether to show ▶ or ⏸ (during a pause the silent
+    // loop is technically playing, so iOS can't work this out on its own)
+    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
   }
   audio.addEventListener("play", syncUI);
   audio.addEventListener("pause", syncUI);
@@ -1067,7 +1108,7 @@
   let dragging = false, dragTime = 0;
   const seek = $("seek");
   function showTime(t) {
-    const d = audio.duration || 0, p = d ? Math.min(1, t / d) : 0;
+    const d = songDur() || 0, p = d ? Math.min(1, t / d) : 0;
     seek.style.setProperty("--p", p * 100 + "%");
     seek.setAttribute("aria-valuemax", Math.round(d));
     seek.setAttribute("aria-valuenow", Math.round(t));
@@ -1076,16 +1117,16 @@
     $("left").textContent = "-" + fmt(Math.max(0, d - t));
     $("miniBar").style.width = p * 100 + "%";
   }
-  audio.addEventListener("timeupdate", () => { if (!dragging && audio.duration) showTime(audio.currentTime); });
-  audio.addEventListener("loadedmetadata", () => showTime(0));
+  audio.addEventListener("timeupdate", () => { if (!dragging && !soft && audio.duration) showTime(audio.currentTime); });
+  audio.addEventListener("loadedmetadata", () => showTime(soft ? soft.time : 0));
 
   // Touch anywhere on the bar to jump there, then keep dragging
   const timeAt = (x) => {
     const r = seek.querySelector(".s-track").getBoundingClientRect();
-    return Math.max(0, Math.min(1, (x - r.left) / r.width)) * (audio.duration || 0);
+    return Math.max(0, Math.min(1, (x - r.left) / r.width)) * (songDur() || 0);
   };
   seek.addEventListener("pointerdown", (e) => {
-    if (!audio.duration) return;
+    if (!songDur()) return;
     dragging = true;
     seek.classList.add("drag");
     try { seek.setPointerCapture(e.pointerId); } catch (_) {}
@@ -1101,13 +1142,13 @@
     if (!dragging) return;
     dragging = false;
     seek.classList.remove("drag");
-    if (commit) audio.currentTime = dragTime; else showTime(audio.currentTime);
+    if (commit) setSongTime(dragTime); else showTime(songTime());
   };
   seek.addEventListener("pointerup", () => endDrag(true));
   seek.addEventListener("pointercancel", () => endDrag(false));
   seek.addEventListener("keydown", (e) => {
     const step = { ArrowRight: 5, ArrowUp: 5, ArrowLeft: -5, ArrowDown: -5 }[e.key];
-    if (step && audio.duration) { e.preventDefault(); audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + step)); showTime(audio.currentTime); }
+    if (step && songDur()) { e.preventDefault(); setSongTime(Math.max(0, Math.min(songDur(), songTime() + step))); showTime(songTime()); }
   });
 
   // ── Lock screen / Control Center ──
@@ -1124,10 +1165,10 @@
     });
   }
   function updatePosition() {
-    if (!("mediaSession" in navigator) || !audio.duration) return;
+    if (!("mediaSession" in navigator) || !songDur()) return;
     try {
       navigator.mediaSession.setPositionState({
-        duration: audio.duration, position: Math.min(audio.currentTime, audio.duration), playbackRate: audio.playbackRate,
+        duration: songDur(), position: Math.min(songTime(), songDur()), playbackRate: 1,
       });
     } catch (e) {}
   }
@@ -1140,14 +1181,12 @@
     const on = (a, fn) => { try { ms.setActionHandler(a, fn); } catch (e) {} };
     on("seekbackward", null);
     on("seekforward", null);
-    // Play/pause are left to iOS itself: after pausing on the lock screen the
-    // app is put to sleep, so a play handler here would never run. Without one,
-    // iOS resumes the <audio> element directly and the app catches up on wake.
-    on("play", null);
-    on("pause", null);
+    // Pause keeps the app awake (see pauseSong), so these always get to run
+    on("play", () => resumeSong());
+    on("pause", () => pauseSong());
     on("previoustrack", () => prev());
     on("nexttrack", () => next(false));
-    on("seekto", (d) => { audio.currentTime = d.seekTime; updatePosition(); });
+    on("seekto", (d) => { setSongTime(d.seekTime); updatePosition(); });
   }
   if ("mediaSession" in navigator) {
     setMediaHandlers();
