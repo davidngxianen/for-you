@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.ALBUM = {
-  version: 14,
+  version: 15,
 
   title: "献给妳的生日歌",
   artist: "David",
