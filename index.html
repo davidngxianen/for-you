@@ -900,7 +900,14 @@
   // `force` skips the "restart if past 3 seconds" rule (used by the swipe)
   function prev(force) {
     if (current < 0) return toggle();
-    if ((!force && audio.currentTime > 3) || !history.length) { audio.currentTime = 0; return; }
+    if (!force && audio.currentTime > 3) { audio.currentTime = 0; return; }
+    if (!history.length) {
+      // Nothing played before this song yet (e.g. it was tapped directly):
+      // go to the song before it in the album, wrapping round when looping
+      if (pos > 0) { pos--; return load(order[pos], true, true); }
+      if (repeat === 1 && N > 1) { pos = N - 1; return load(order[pos], true, true); }
+      audio.currentTime = 0; return;
+    }
     const h = history.pop();
     pos = h.pos;
     load(h.i, true, true);
@@ -1010,9 +1017,20 @@
   swipeToChange($("mini"), $("miniTrack"), 110, 60);
   swipeToChange($("npCover"), $("npCover"), 120, 70);
   $("npClose").onclick = () => openNP(false);
-  let touchY = null;   // swipe down on the cover to close
-  $("np").addEventListener("touchstart", (e) => { if ($("np").scrollTop <= 0 && !e.target.closest(".scrubber")) touchY = e.touches[0].clientY; }, { passive: true });
-  $("np").addEventListener("touchend", (e) => { if (touchY != null && e.changedTouches[0].clientY - touchY > 90) openNP(false); touchY = null; }, { passive: true });
+  // Swipe down to close — only when the swipe is clearly downward, so a
+  // sideways swipe on the cover (to change song) never closes the player
+  let touch0 = null;
+  $("np").addEventListener("touchstart", (e) => {
+    touch0 = $("np").scrollTop <= 0 && !e.target.closest(".scrubber")
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  }, { passive: true });
+  $("np").addEventListener("touchend", (e) => {
+    if (!touch0) return;
+    const dx = e.changedTouches[0].clientX - touch0.x, dy = e.changedTouches[0].clientY - touch0.y;
+    touch0 = null;
+    if ($("npCover")._swiped) return;
+    if (dy > 110 && Math.abs(dx) < dy * 0.5) openNP(false);
+  }, { passive: true });
 
   function syncUI() {
     const playing = !audio.paused;
@@ -1417,7 +1435,9 @@
     // covers show right away (skipped while music is playing).
     const hadWorker = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (hadWorker && audio.paused && $("onboard").hidden) location.reload();
+      // Only reload if nothing has been played yet; otherwise the update simply
+      // applies next time the app is opened (a reload mid-use would kick you out)
+      if (hadWorker && current < 0 && $("onboard").hidden) location.reload();
     });
     // Versioned URL + no HTTP cache, so a new version is always picked up
     navigator.serviceWorker.register("sw.js?v=" + A.version, { updateViaCache: "none" });
