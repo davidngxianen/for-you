@@ -33,7 +33,7 @@
     font-family: "Figtree", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     font-size: 16px; line-height: 1.35;
     -webkit-font-smoothing: antialiased;
-    -webkit-user-select: none; user-select: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
     overscroll-behavior-y: none;
   }
   button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
@@ -222,6 +222,10 @@
   /* ── Song rows: swipe right to queue ── */
   .track { position: relative; overflow: hidden; touch-action: pan-y; padding: 0; margin: 0 -16px; }
   .track-inner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 9px 16px; background: var(--bg); position: relative; z-index: 1; transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+  /* tap / tap-and-hold highlight */
+  .track.pressed .track-inner { background: #000; }
+  .lib-item.pressed { background: #000; }
+  .lib-item { margin: 0 -16px; padding: 8px 16px; }
   .swipe-bg {
     position: absolute; inset: 0; background: var(--green); color: #000; display: flex; align-items: center; padding-left: 22px;
     opacity: 0; transition: opacity .25s;
@@ -277,6 +281,35 @@
   button.d-item:active { background: #2a2a2a; }
   .d-item small { display: block; color: var(--muted); font-size: 13px; font-weight: 500; margin-top: 2px; }
   .drawer-foot { margin-top: auto; padding: 0 18px; color: #7a7a7a; font-size: 12px; }
+
+  /* ── Edit song order ── */
+  .edit {
+    position: fixed; inset: 0; z-index: 17; background: var(--bg); overflow-y: auto;
+    transform: translateY(100%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+  }
+  .edit.open { transform: none; }
+  .edit-head {
+    position: sticky; top: 0; z-index: 2; background: var(--bg);
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: calc(env(safe-area-inset-top) + 12px) 16px 12px; border-bottom: 1px solid #2a2a2a;
+  }
+  .edit-head b { font-size: 16px; font-weight: 700; }
+  .edit-head button { font-size: 15px; font-weight: 600; color: var(--muted); justify-self: start; }
+  .edit-head .save { justify-self: end; color: #000; background: var(--green); padding: 7px 16px; border-radius: 16px; font-weight: 700; }
+  .edit-tip { color: var(--muted); font-size: 13px; padding: 14px 16px 6px; }
+  .edit-list { list-style: none; margin: 0; padding: 0; position: relative; }
+  .edit-row {
+    display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; background: var(--bg);
+    position: relative; transition: background .15s, box-shadow .15s;
+  }
+  .edit-row img { width: 44px; height: 44px; object-fit: cover; flex: none; }
+  .edit-row .info { flex: 1; min-width: 0; }
+  .edit-row .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .edit-row .a { color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+  .handle { width: 48px; height: 48px; display: grid; place-items: center; color: var(--muted); touch-action: none; cursor: grab; flex: none; }
+  .edit-row.lifting { z-index: 3; background: #2a2a2a; box-shadow: 0 10px 30px rgba(0,0,0,.6); transition: none; }
+  .edit-row.lifting .handle { color: #fff; cursor: grabbing; }
 
   /* ── Toast ── */
   .toast {
@@ -500,7 +533,7 @@
         <button id="saved" aria-label="Available offline">
           <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5v8M8.5 12l3.5 3.5 3.5-3.5"/></svg>
         </button>
-        <button aria-label="More"><svg class="ico fill" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+        <button id="albumMore" aria-label="Album options"><svg class="ico fill" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
       </div>
       <div class="right">
         <button class="shuffle-btn" aria-label="Shuffle">
@@ -576,6 +609,25 @@
   <button class="s-item" id="sLike"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20.5l-1.3-1.2C5.6 14.7 2.5 11.9 2.5 8.4 2.5 5.6 4.7 3.5 7.4 3.5c1.6 0 3.3.8 4.6 2.2 1.3-1.4 3-2.2 4.6-2.2 2.7 0 4.9 2.1 4.9 4.9 0 3.5-3.1 6.3-8.2 10.9z"/></svg><span id="sLikeText">Like</span></button>
 </div>
 
+<!-- Album options (the ⋯ next to the download icon) -->
+<div class="sheet" id="albumSheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="sheet-head"><img id="aSheetCover" alt=""><div><div class="t" id="aSheetTitle"></div><div class="a" id="aSheetSub"></div></div></div>
+  <button class="s-item" id="sEditOrder"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h11M4 12h11M4 17h11M19 5v14M16.5 7.5 19 5l2.5 2.5M16.5 16.5 19 19l2.5-2.5"/></svg>Edit song order</button>
+  <button class="s-item" id="sResetOrder" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Reset to original order</button>
+</div>
+
+<!-- Edit song order -->
+<section class="edit" id="edit" aria-hidden="true" aria-label="Edit song order">
+  <header class="edit-head">
+    <button id="editCancel">Cancel</button>
+    <b>Edit song order</b>
+    <button class="save" id="editSave">Save</button>
+  </header>
+  <div class="edit-tip">Drag ≡ to move a song</div>
+  <ol class="edit-list" id="editList"></ol>
+</section>
+
 <!-- Settings -->
 <aside class="drawer" id="drawer" aria-hidden="true">
   <div class="drawer-profile">
@@ -637,7 +689,16 @@
   };
 
   let current = -1;          // index into A.tracks
-  let order = [...Array(N).keys()];
+  // The album's song order, as rearranged on this phone (saved by file name)
+  const natural = [...Array(N).keys()];
+  let albumOrder = (() => {
+    const saved = store.get("songOrder", null);
+    if (!Array.isArray(saved)) return natural;
+    const idx = saved.map((f) => A.tracks.findIndex((t) => t.file === f)).filter((i) => i >= 0);
+    natural.forEach((i) => { if (!idx.includes(i)) idx.push(i); });   // songs added later go at the end
+    return [...new Set(idx)];
+  })();
+  let order = [...albumOrder];
   let pos = 0;               // position within `order`
   let shuffle = store.get("shuffle", false);
   let repeat = 0;            // 0 off, 1 all, 2 one
@@ -668,6 +729,15 @@
     el.addEventListener("pointercancel", () => { if (state === 2) end(0); state = 0; });
   }
 
+  // Black highlight while a finger is down; cleared when it turns into a scroll or swipe
+  function pressable(el) {
+    const off = () => el.classList.remove("pressed");
+    el.addEventListener("pointerdown", (e) => { if (!e.target.closest(".more")) el.classList.add("pressed"); });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => el.addEventListener(ev, off));
+    el.addEventListener("pointermove", (e) => { if (el._y0 != null && Math.abs(e.clientY - el._y0) > 10) off(); });
+    el.addEventListener("pointerdown", (e) => (el._y0 = e.clientY));
+  }
+
   // ── Album page ──
   document.title = A.title;
   [$("cover"), $("avatar"), $("miniCover"), $("npCover")].forEach((el) => (el.src = A.cover));
@@ -685,13 +755,16 @@
       </div>`;
     li.querySelector(".name").textContent = t.title;
     li.querySelector(".a").textContent = A.artist;
+    li.dataset.i = i;
     li.onclick = () => { if (!li._swiped) i === current ? toggle() : start(i); };
+    pressable(li);
     li.querySelector(".more").onclick = (e) => { e.stopPropagation(); openSheet(i); };
 
     // Swipe right to add to queue
     const inner = li.querySelector(".track-inner"), bg = li.querySelector(".swipe-bg");
     swipeable(li, {
       move(dx) {
+        li.classList.remove("pressed");
         const d = Math.max(0, Math.min(dx, 140));
         inner.style.transition = bg.style.transition = "none";
         inner.style.transform = `translateX(${d}px)`;
@@ -706,7 +779,9 @@
     });
     $("list").appendChild(li);
   });
-  const rows = [...$("list").children];
+  const rows = [...$("list").children];   // indexed by track number, not display order
+  const layoutRows = () => albumOrder.forEach((i) => $("list").appendChild(rows[i]));
+  layoutRows();
 
   // Total length for the footer, like "3 songs, 1 min 15 sec"
   let total = 0, loaded = 0;
@@ -756,7 +831,7 @@
 
   // ── Queue / shuffle ──
   function buildOrder(first) {
-    order = [...Array(N).keys()];
+    order = [...albumOrder];
     if (shuffle) {
       for (let i = N - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
       if (first != null) { order.splice(order.indexOf(first), 1); order.unshift(first); }
@@ -801,7 +876,7 @@
   }
   function toggle() {
     if (current < 0 && queue.length) return start(takeQueued());
-    if (current < 0) return start(shuffle ? Math.floor(Math.random() * N) : 0);
+    if (current < 0) return start(shuffle ? Math.floor(Math.random() * N) : albumOrder[0]);
     audio.paused ? audio.play() : audio.pause();
   }
   function next(auto) {
@@ -1204,7 +1279,7 @@
   renderLikedCount();
 
   const closeAll = () => {
-    for (const id of ["drawer", "sheet"]) { $(id).classList.remove("open"); $(id).setAttribute("aria-hidden", "true"); }
+    for (const id of ["drawer", "sheet", "albumSheet"]) { $(id).classList.remove("open"); $(id).setAttribute("aria-hidden", "true"); }
     $("scrim").classList.remove("show");
   };
   const openPanel = (id) => { $(id).classList.add("open"); $(id).setAttribute("aria-hidden", "false"); $("scrim").classList.add("show"); };
@@ -1227,6 +1302,100 @@
   }
   $("sQueue").onclick = () => { closeAll(); addToQueue(sheetFor); };
   $("sLike").onclick = () => { closeAll(); toggleLike(sheetFor); };
+
+  pressable($("libAlbum"));
+
+  // ── Album ⋯ menu → Edit song order ──
+  const isCustomOrder = () => albumOrder.some((v, k) => v !== k);
+  $("albumMore").onclick = () => {
+    $("aSheetCover").src = A.cover;
+    $("aSheetTitle").textContent = A.title;
+    $("aSheetSub").textContent = `Album · ${A.artist}`;
+    $("sResetOrder").hidden = !isCustomOrder();
+    openPanel("albumSheet");
+  };
+  $("sResetOrder").onclick = () => { closeAll(); applyOrder(natural); toast("Back to the original order"); };
+  $("sEditOrder").onclick = () => { closeAll(); openEdit(); };
+
+  function applyOrder(newOrder) {
+    albumOrder = [...newOrder];
+    store.set("songOrder", albumOrder.map((i) => A.tracks[i].file));
+    layoutRows();
+    history = [];
+    if (current >= 0) buildOrder(current); else buildOrder();
+  }
+
+  function openEdit() {
+    const list = $("editList");
+    list.innerHTML = "";
+    albumOrder.forEach((i) => {
+      const li = document.createElement("li");
+      li.className = "edit-row";
+      li.dataset.i = i;
+      li.innerHTML = `<img alt=""><div class="info"><div class="t"></div><div class="a"></div></div>
+        <span class="handle" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16M4 12h16M4 16h16"/></svg></span>`;
+      li.querySelector("img").src = A.cover;
+      li.querySelector(".t").textContent = A.tracks[i].title;
+      li.querySelector(".a").textContent = A.artist;
+      dragToReorder(li, li.querySelector(".handle"), list);
+      list.appendChild(li);
+    });
+    $("edit").classList.add("open");
+    $("edit").setAttribute("aria-hidden", "false");
+  }
+  const closeEdit = () => { $("edit").classList.remove("open"); $("edit").setAttribute("aria-hidden", "true"); };
+  $("editCancel").onclick = closeEdit;
+  $("editSave").onclick = () => {
+    applyOrder([...$("editList").children].map((li) => +li.dataset.i));
+    closeEdit();
+    toast("Song order saved");
+  };
+
+  // Drag a row by its ≡ handle; neighbours slide out of the way
+  function dragToReorder(li, handle, list) {
+    let startY = 0, active = false;
+    const slide = (el, from) => {   // animate a neighbour from its old spot to its new one
+      const to = el.offsetTop;
+      el.style.transition = "none";
+      el.style.transform = `translateY(${from - to}px)`;
+      void el.offsetWidth;
+      el.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1)";
+      el.style.transform = "";
+    };
+    handle.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      active = true; startY = e.clientY;
+      li.classList.add("lifting");
+      try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    handle.addEventListener("pointermove", (e) => {
+      if (!active) return;
+      let dy = e.clientY - startY;
+      const mid = li.offsetTop + dy + li.offsetHeight / 2;
+      const nxt = li.nextElementSibling, prv = li.previousElementSibling;
+      // swap a bit past the halfway point; the gap between 15% and 85% stops flicker
+      if (nxt && mid > nxt.offsetTop + nxt.offsetHeight * 0.15) {
+        const from = nxt.offsetTop;
+        list.insertBefore(nxt, li);
+        startY += nxt.offsetHeight; slide(nxt, from);
+      } else if (prv && mid < prv.offsetTop + prv.offsetHeight * 0.85) {
+        const from = prv.offsetTop;
+        list.insertBefore(li, prv);
+        startY -= prv.offsetHeight; slide(prv, from);
+      }
+      dy = e.clientY - startY;
+      li.style.transform = `translateY(${dy}px)`;
+    });
+    const drop = () => {
+      if (!active) return;
+      active = false;
+      li.classList.remove("lifting");
+      li.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1)";
+      li.style.transform = "";
+    };
+    handle.addEventListener("pointerup", drop);
+    handle.addEventListener("pointercancel", drop);
+  }
 
   setView("library");
   if (!store.get("unwrapped", false) && A.welcome) showOnboarding();
