@@ -942,7 +942,11 @@
     $("mini").classList.add("show");
     $("dock").classList.add("show");
     setMeta(t);
+    // Safari keeps an already-playing <audio> "playing" across a src change and
+    // fires no play/pause event, so set the state and refresh ▶/⏸ ourselves.
     if (autoplay) audio.play().catch(() => {});
+    else audio.pause();
+    syncUI();
   }
   function toggle() {
     if (current < 0 && queue.length) return start(takeQueued());
