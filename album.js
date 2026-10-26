@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.ALBUM = {
-  version: 23,
+  version: 24,
 
   title: "献给妳的生日歌",
   artist: "David",
@@ -41,6 +41,12 @@ self.ALBUM = {
     {
       title: "最后一页",
       file: "audio/05.mp3",
+      note: "",
+      lyrics: "",
+    },
+    {
+      title: "如果愛忘了",
+      file: "audio/06.mp3",
       note: "",
       lyrics: "",
     },
