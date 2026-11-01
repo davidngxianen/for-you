@@ -70,7 +70,7 @@ self.ALBUM = {
   // Add `square: true` for a square picture.
   // Colours: purple, lime, pink, orange, blue, red, green.
   wrapped: [
-    { color: "purple", photo: "memories/qiqienen.jpg", square: true, kicker: "Hey {to}, it's your Wrapped", big: "Memories of QiQi EnEn!", small: "Let's look back on our adventure." },
+    { color: "purple", photo: "memories/collage.jpg", square: true, kicker: "Hey {to}, it's your Wrapped", big: "Memories of QiQi EnEn!", small: "Let's look back on our adventure." },
     { color: "orange", photo: "memories/halloween.jpg", date: "19 Oct 2025", kicker: "Our first Halloween", big: "2 little devils", small: "…and the first time we held hands. Who's scared now?" },
     { color: "pink",   photo: "memories/birthday.jpg", date: "27 Oct 2025", kicker: "Your first birthday with me", big: "Celebrated early", small: "Couldn't wait for the actual day, so we didn't." },
     { color: "blue",   photo: "memories/flight.jpg", date: "2 Jun 2026", kicker: "Altitude reached", big: "Wheels up!", small: "Our first time flying somewhere together. (Also: your face when the food arrived.)" },
