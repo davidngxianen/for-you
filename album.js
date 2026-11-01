@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.ALBUM = {
-  version: 25,
+  version: 26,
 
   title: "献给妳的生日歌",
   artist: "David",
@@ -58,6 +58,7 @@ self.ALBUM = {
     heading: "Something's waiting for you",
     password: "qiqienen",          // not case-sensitive
     hint: "David & Jiaqi",
+    inside: "memories/qiqienen.jpg",   // what the gift reveals (the album cover stays a surprise for the end)
   },
 
   // ── "Wrapped" story slides shown after unwrapping ──
@@ -66,14 +67,15 @@ self.ALBUM = {
   //   kicker = small line on top     big = the headline
   //   small  = caption underneath    date = little sticker on the photo
   // Leave out `photo` for a text-only slide. {to} and {artist} are filled in for you.
+  // Add `square: true` for a square picture.
   // Colours: purple, lime, pink, orange, blue, red, green.
   wrapped: [
-    { color: "purple", kicker: "Your 2026 Wrapped", big: "Hey {to}.", small: "We made a lot of memories this year. Let's look back." },
-    { color: "lime",   photo: "memories/01.jpg", date: "Jan 2025", kicker: "Your #1 memory", big: "Our first date", small: "Where it all started." },
-    { color: "pink",   photo: "memories/02.jpg", date: "Mar 2025", kicker: "Total length of our trip", big: "5 days", small: "…and somehow still not enough." },
-    { color: "orange", photo: "memories/03.jpg", kicker: "Most-visited place", big: "That café", small: "Same order. Every single time." },
-    { color: "blue",   photo: "memories/04.jpg", date: "Aug 2025", kicker: "Your #2 memory", big: "Getting lost together", small: "Best wrong turn we ever took." },
-    { color: "green",  photo: "memories/05.jpg", kicker: "Photos taken", big: "1,284", small: "You approved 12 of them." },
+    { color: "purple", photo: "memories/qiqienen.jpg", square: true, kicker: "Hey {to}, it's your Wrapped", big: "Memories of QiQi EnEn!", small: "Let's look back on our adventure." },
+    { color: "orange", photo: "memories/halloween.jpg", date: "19 Oct 2025", kicker: "Our first Halloween", big: "2 little devils", small: "…and the first time we held hands. Who's scared now?" },
+    { color: "pink",   photo: "memories/birthday.jpg", date: "27 Oct 2025", kicker: "Your first birthday with me", big: "Celebrated early", small: "Couldn't wait for the actual day, so we didn't." },
+    { color: "blue",   photo: "memories/flight.jpg", date: "2 Jun 2026", kicker: "Altitude reached", big: "Wheels up!", small: "Our first time flying somewhere together. Best seatmate award goes to… you." },
+    { color: "green",  photo: "memories/place.jpg", date: "9 Sep 2026", kicker: "Most memorable place", big: "This spot", small: "A place we'll always remember. You know exactly why." },
+    { color: "lime",   photo: "memories/outfit.jpg", date: "10 Oct 2026", kicker: "Outfit rating", big: "10/10", small: "You look great in anything. That's not a compliment, it's a fact." },
     { color: "red",    type: "final", kicker: "And I made you something", button: "Open the album" },
   ],
 };

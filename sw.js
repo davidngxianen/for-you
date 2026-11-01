@@ -6,7 +6,7 @@ const CACHE = "album-v" + self.ALBUM.version;
 const SHELL = ["./", "index.html", "album.js", "manifest.webmanifest",
   "icon-180.png", "icon-192.png", "icon-512.png", self.ALBUM.cover, "audio/silence.mp3"];
 const AUDIO = self.ALBUM.tracks.map((t) => t.file);
-const PHOTOS = (self.ALBUM.wrapped || []).map((s) => s.photo).filter(Boolean);
+const PHOTOS = [(self.ALBUM.welcome || {}).inside, ...(self.ALBUM.wrapped || []).map((s) => s.photo)].filter(Boolean);
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll([...SHELL, ...AUDIO, ...PHOTOS])));
