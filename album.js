@@ -50,6 +50,30 @@ self.ALBUM = {
       note: "",
       lyrics: "",
     },
+    {
+      title: "碎碎念",
+      file: "audio/07.mp3",
+      note: "",
+      lyrics: "",
+    },
+    {
+      title: "折起的遗憾",
+      file: "audio/08.mp3",
+      note: "",
+      lyrics: "",
+    },
+    {
+      title: "所以我只想对你说",
+      file: "audio/09.mp3",
+      note: "",
+      lyrics: "",
+    },
+    {
+      title: "對等關係",
+      file: "audio/10.mp3",
+      note: "",
+      lyrics: "",
+    },
   ],
 
   // ── Welcome screen (the wrapped gift + password) ──
