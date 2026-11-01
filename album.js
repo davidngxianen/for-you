@@ -78,6 +78,6 @@ self.ALBUM = {
     { color: "lime",   photo: "memories/outfit.jpg", date: "10 Oct 2026", kicker: "Outfit rating", big: "10/10", small: "You look great in anything. Even a storeroom becomes your runway." },
     { color: "purple", kicker: "That's a wrap!", big: "Hope you enjoyed it!", small: "Our mini memory album story. Starring: you. Directed by: me. Sequel: already in production." },
     { color: "blue",   kicker: "Come closer…", big: "Psssssst…", small: "I know what you've been wishing\u00a0for…" },
-    { color: "red",    type: "final", kicker: "And I made you something", button: "Open the album" },
+    { color: "red",    type: "final", kicker: "…a whole album, sung\u00a0just\u00a0for\u00a0you", button: "Open the album" },
   ],
 };
