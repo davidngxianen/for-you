@@ -74,8 +74,8 @@ self.ALBUM = {
     { color: "orange", photo: "memories/halloween.jpg", date: "19 Oct 2025", kicker: "Our first Halloween", big: "2 little devils", small: "…and the first time we held hands. Who's scared now?" },
     { color: "pink",   photo: "memories/birthday.jpg", date: "27 Oct 2025", kicker: "Your first birthday with me", big: "Celebrated early", small: "Couldn't wait for the actual day, so we didn't." },
     { color: "blue",   photo: "memories/flight.jpg", date: "2 Jun 2026", kicker: "Altitude reached", big: "Wheels up!", small: "Our first time flying somewhere together. Best seatmate award goes to… you." },
-    { color: "green",  photo: "memories/place.jpg", date: "9 Sep 2026", kicker: "Most memorable place", big: "This spot", small: "A place we'll always remember. You know exactly why." },
-    { color: "lime",   photo: "memories/outfit.jpg", date: "10 Oct 2026", kicker: "Outfit rating", big: "10/10", small: "You look great in anything. That's not a compliment, it's a fact." },
+    { color: "green",  photo: "memories/place.jpg", date: "9 Sep 2026", kicker: "Most memorable place", big: "This spot", small: "A place we'll always remember. (Also: your face when the food arrived.)" },
+    { color: "lime",   photo: "memories/outfit.jpg", date: "10 Oct 2026", kicker: "Outfit rating", big: "10/10", small: "You look great in anything. Even a storeroom becomes your runway." },
     { color: "red",    type: "final", kicker: "And I made you something", button: "Open the album" },
   ],
 };
