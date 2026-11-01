@@ -58,7 +58,7 @@ self.ALBUM = {
     heading: "Something's waiting for you",
     password: "qiqienen",          // not case-sensitive
     hint: "David & Jiaqi",
-    inside: "memories/qiqienen.jpg",   // what the gift reveals (the album cover stays a surprise for the end)
+    inside: "memories/collage.jpg",   // what the gift reveals (the album cover stays a surprise for the end)
   },
 
   // ── "Wrapped" story slides shown after unwrapping ──
