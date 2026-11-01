@@ -76,6 +76,8 @@ self.ALBUM = {
     { color: "blue",   photo: "memories/flight.jpg", date: "2 Jun 2026", kicker: "Altitude reached", big: "Wheels up!", small: "Our first time flying somewhere together. (Also: your face when the food arrived.)" },
     { color: "green",  photo: "memories/place.jpg", date: "9 Sep 2026", kicker: "Most memorable place", big: "This spot", small: "A place we'll always remember. You know exactly why." },
     { color: "lime",   photo: "memories/outfit.jpg", date: "10 Oct 2026", kicker: "Outfit rating", big: "10/10", small: "You look great in anything. Even a storeroom becomes your runway." },
+    { color: "purple", kicker: "That's a wrap!", big: "Hope you enjoyed it!", small: "Our mini memory album story. Starring: you. Directed by: me. Sequel: already in production." },
+    { color: "blue",   kicker: "Come closer…", big: "Psssssst…", small: "I know what you've been wishing\u00a0for…" },
     { color: "red",    type: "final", kicker: "And I made you something", button: "Open the album" },
   ],
 };
