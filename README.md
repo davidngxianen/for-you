@@ -22,7 +22,7 @@ Replace `cover.jpg` with a square image, then regenerate the app icons from it:
 python3 make_cover.py --from-cover
 ```
 
-Also change `"For You"` in `manifest.webmanifest` and the `<title>` /
+Also change the app name (now `"Little us"`) in `manifest.webmanifest` and the `<title>` /
 `apple-mobile-web-app-title` lines in `index.html`. That's the name under the home-screen icon.
 
 ## 2b. The welcome gift + Wrapped slides

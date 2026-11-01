@@ -1,6 +1,6 @@
 {
-  "name": "For You",
-  "short_name": "For You",
+  "name": "Little us",
+  "short_name": "Little us",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
