@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.ALBUM = {
-  version: 27,
+  version: 28,
 
   title: "献给妳的生日歌",
   artist: "David",
@@ -69,7 +69,7 @@ self.ALBUM = {
       lyrics: "",
     },
     {
-      title: "對等關係",
+      title: "對等關係 (feat. 黄献恩)",
       file: "audio/10.mp3",
       note: "",
       lyrics: "",
