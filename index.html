@@ -24,6 +24,8 @@
     --green: #1ed760;
     --tint: #5a3a3a;       /* replaced at runtime with the cover's colour */
     --tint-dark: #3a2626;
+    --np-tint: #5a3a3a;    /* the playing song's cover colour (mini player + Now Playing) */
+    --np-dark: #3a2626;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--ink); }
@@ -60,11 +62,12 @@
   }
   .album-cover {
     width: min(64vw, 280px); aspect-ratio: 1; margin: 0 auto 22px; display: block;
-    box-shadow: 0 8px 40px rgba(0,0,0,.55); object-fit: cover;
+    box-shadow: 0 8px 40px rgba(0,0,0,.55);
   }
   .album-title { font-size: 24px; font-weight: 800; letter-spacing: -.2px; margin: 0 0 10px; }
   .artist-row { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
-  .avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+  .avatar { width: 24px; height: 24px; border-radius: 50%; overflow: hidden; flex: none; display: grid; place-items: center; background: #f573a0; color: #121212; font-size: 12px; font-weight: 800; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
   .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
   .actions { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 6px; }
   .actions .left, .actions .right { display: flex; align-items: center; gap: 22px; }
@@ -104,7 +107,7 @@
     position: fixed; left: 8px; right: 8px; z-index: 6;
     bottom: calc(8px + env(safe-area-inset-bottom));
     max-width: 464px; margin: 0 auto;
-    background: var(--tint-dark); border-radius: 8px; overflow: hidden;
+    background: var(--np-dark); border-radius: 8px; overflow: hidden;
     display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px 8px;
     /* hidden: pushed fully below the screen, including the home-bar area */
     transform: translateY(calc(100% + 24px + env(safe-area-inset-bottom)));
@@ -125,7 +128,7 @@
   /* ── Full "Now Playing" screen ── */
   .np {
     position: fixed; inset: 0; z-index: 10; overflow-y: auto;
-    background: linear-gradient(180deg, var(--tint) 0%, var(--tint-dark) 55%, #121212 100%);
+    background: linear-gradient(180deg, var(--np-tint) 0%, var(--np-dark) 55%, #121212 100%);
     transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.8,.2,1);
     padding: calc(env(safe-area-inset-top) + 8px) 24px calc(env(safe-area-inset-bottom) + 24px);
   }
@@ -171,7 +174,7 @@
   .np-play .ico { width: 30px; height: 30px; }
 
   .card { background: rgba(0,0,0,.25); border-radius: 10px; padding: 16px; margin-top: 28px; }
-  .card.lyrics { background: var(--tint); }
+  .card.lyrics { background: var(--np-tint); }
   .card h3 { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
   .card p { margin: 0; white-space: pre-line; font-size: 20px; font-weight: 700; line-height: 1.45; }
   .card.about p { font-size: 15px; font-weight: 500; color: rgba(255,255,255,.85); }
@@ -213,7 +216,8 @@
   .lib-list { list-style: none; margin: 0; padding: 0 16px calc(120px + env(safe-area-inset-bottom)); }
   .lib-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; cursor: pointer; }
   .lib-item:active { opacity: .7; }
-  .lib-item img { width: 67px; height: 67px; object-fit: cover; flex: none; }
+  .lib-item .art { width: 67px; height: 67px; flex: none; }
+  .lib-item .art.round { border-radius: 6px; overflow: hidden; }
   .lib-item .t { font-size: 16px; font-weight: 600; }
   .lib-item.playing .t { color: var(--green); }
   .lib-item .a { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13.5px; margin-top: 4px; }
@@ -261,6 +265,7 @@
   .sheet-head .t { font-weight: 700; } .sheet-head .a { color: var(--muted); font-size: 13.5px; margin-top: 2px; }
   .s-item { display: flex; align-items: center; gap: 16px; width: 100%; padding: 14px 16px; font-size: 16px; font-weight: 500; text-align: left; }
   .s-item:active { background: #333; }
+  .s-item[hidden] { display: none; }
   .s-item .ico { color: var(--muted); }
   .s-item.on .ico { color: var(--green); fill: currentColor; }
 
@@ -328,6 +333,60 @@
   .q-list img { width: 40px; height: 40px; object-fit: cover; }
   .q-list small { display: block; color: rgba(255,255,255,.65); font-weight: 500; font-size: 13px; }
   .np { overscroll-behavior: contain; }
+
+  /* ── Cover art: an album cover, or a playlist's mosaic ── */
+  .art > img, .mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mosaic { display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%; }
+  .art-empty { width: 100%; height: 100%; display: grid; place-items: center; background: linear-gradient(135deg, #3d3d3d, #252525); color: #8a8a8a; }
+  .art-empty .ico { width: 42%; height: 42%; stroke-width: 1.5; }
+  .lib-add { margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; }
+  .lib-add .ico { width: 26px; height: 26px; }
+  .chip { cursor: pointer; }
+  .lib-item .art-add { border-radius: 50%; background: #2a2a2a; display: grid; place-items: center; }
+  .lib-item .art-add .ico { width: 30px; height: 30px; }
+  .lib-empty { color: var(--muted); font-size: 14px; padding: 24px 0; text-align: center; }
+
+  /* ── Empty album / playlist ── */
+  .empty { text-align: center; padding: 40px 32px calc(120px + env(safe-area-inset-bottom)); }
+  .empty b { display: block; font-size: 20px; font-weight: 800; }
+  .empty p { color: var(--muted); font-size: 14px; margin: 8px 0 20px; }
+  .pill { height: 44px; padding: 0 24px; border-radius: 22px; background: #fff; color: #000; font-weight: 800; font-size: 15px; }
+  .big-play.off { opacity: .4; }
+
+  /* ── Pick a playlist (song ⋯ → Add to playlist) ── */
+  .sheet-title { font-weight: 800; font-size: 17px; text-align: center; padding: 4px 16px 10px; }
+  .pl-pick { list-style: none; margin: 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+  .pl-pick li { display: flex; align-items: center; gap: 12px; padding: 8px 16px; cursor: pointer; }
+  .pl-pick li:active { background: #333; }
+  .pl-pick .art { width: 48px; height: 48px; flex: none; }
+  .pl-pick .t { font-weight: 600; } .pl-pick .a { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  /* ── Add songs to a playlist ── */
+  .pick-head { padding: 22px 16px 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .pick-btn { width: 32px; height: 32px; margin-right: 10px; border-radius: 50%; border: 2px solid var(--muted); color: var(--muted); display: grid; place-items: center; flex: none; }
+  .pick-btn .ico { width: 18px; height: 18px; stroke-width: 2.5; }
+  .pick-btn.on { background: var(--green); border-color: var(--green); color: #000; }
+  .rm { width: 28px; height: 28px; border-radius: 50%; background: #e9334b; color: #fff; display: grid; place-items: center; flex: none; }
+  .rm .ico { width: 16px; height: 16px; stroke-width: 3; }
+  .edit-row.gone { display: none; }
+
+  /* ── Name / confirm dialog ── */
+  .dlg {
+    position: fixed; inset: 0; z-index: 25; background: linear-gradient(180deg, #3b3b3b, #121212 70%);
+    display: flex; justify-content: center; padding: calc(env(safe-area-inset-top) + 18vh) 24px 0;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .dlg.open { opacity: 1; pointer-events: auto; }
+  .dlg-box { width: 100%; max-width: 380px; text-align: center; }
+  .dlg h2 { margin: 0 0 26px; font-size: 24px; font-weight: 800; letter-spacing: -.3px; }
+  .dlg input {
+    width: 100%; border: 0; border-bottom: 2px solid #8a8a8a; background: none; color: #fff; outline: none;
+    font: 800 30px "Figtree", -apple-system, sans-serif; text-align: center; padding: 6px 0; -webkit-user-select: text; user-select: text;
+  }
+  .dlg input:focus { border-color: #fff; }
+  .dlg p { color: var(--muted); font-size: 15px; margin: 0 0 8px; }
+  .dlg-btns { display: flex; justify-content: center; gap: 14px; margin-top: 30px; }
+  .dlg-cancel { height: 44px; padding: 0 22px; border-radius: 22px; border: 1px solid #8a8a8a; font-weight: 700; }
 
   /* ═════════════ ONBOARDING ═════════════ */
   .onboard { position: fixed; inset: 0; z-index: 30; background: #121212; overflow: hidden; transition: opacity .6s; }
@@ -419,6 +478,9 @@
   .sbars span.now i { animation: fill var(--dur, 6s) linear forwards; }
   .story.paused .sbars span.now i { animation-play-state: paused; }
   @keyframes fill { to { width: 100% } }
+  .story-close { position: absolute; z-index: 5; left: 8px; top: calc(env(safe-area-inset-top) + 18px); width: 36px; height: 36px; display: grid; place-items: center; color: var(--fg, #fff); }
+  .open-btn { margin-top: 48px; padding: 0 34px; }
+  .open-btn[hidden], .unlock[hidden], .hint-btn[hidden] { display: none; }
   .story-skip { position: absolute; z-index: 5; right: 14px; top: calc(env(safe-area-inset-top) + 24px); font-weight: 700; font-size: 14px; color: var(--fg, #fff); opacity: .8; }
   .tap { position: absolute; z-index: 2; top: 0; bottom: 0; }
   .tap.prev { left: 0; width: 30%; } .tap.next { right: 0; width: 70%; }
@@ -503,17 +565,15 @@
     <header class="lib-head">
       <button class="pfp" id="pfpBtn" aria-label="Settings"></button>
       <h1>Your Library</h1>
+      <button class="lib-add" id="libAdd" aria-label="Create playlist"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </header>
-    <div class="chips"><span class="chip on">Albums</span></div>
+    <div class="chips" id="chips">
+      <button class="chip" data-f="albums">Albums</button>
+      <button class="chip" data-f="playlists">Playlists</button>
+      <button class="chip" data-f="archive">Archive</button>
+    </div>
     <div class="sort"><svg class="ico" viewBox="0 0 24 24"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>Recents</div>
-    <ul class="lib-list">
-      <li class="lib-item" id="libAlbum">
-        <img id="libCover" alt="">
-        <div><div class="t" id="libTitle"></div>
-          <div class="a"><svg class="pin ico fill" viewBox="0 0 24 24"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z"/></svg><span id="libSub"></span></div>
-        </div>
-      </li>
-    </ul>
+    <ul class="lib-list" id="libList"></ul>
   </main>
 
   <main class="view" id="albumView" hidden>
@@ -526,9 +586,9 @@
   <section class="album-head">
     <button class="head-btn l settings-btn" aria-label="Settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <button class="head-btn r lib-btn" aria-label="Your Library"><svg class="ico" viewBox="0 0 24 24"><path d="M4 3.5v17M9.5 3.5v17M14.5 4l5.5 16.5"/></svg></button>
-    <img class="album-cover" id="cover" alt="">
+    <div class="album-cover" id="coverBox"></div>
     <h1 class="album-title" id="title"></h1>
-    <div class="artist-row"><img class="avatar" id="avatar" alt=""><span id="artist"></span></div>
+    <div class="artist-row"><span class="avatar" id="avatar"></span><span id="artist"></span></div>
     <div class="meta" id="meta"></div>
     <div class="actions">
       <div class="left">
@@ -545,12 +605,16 @@
         <button class="shuffle-btn" aria-label="Shuffle">
           <svg class="ico" viewBox="0 0 24 24"><path d="M3 7h3c4 0 6 10 10 10h4M17 14l3 3-3 3M3 17h3c1.6 0 2.8-1.6 3.8-3.4M13.4 9.6C14.3 8 15.4 7 17 7h3M17 4l3 3-3 3"/></svg>
         </button>
-        <button class="big-play" id="bigPlay" aria-label="Play"><svg class="ico fill" viewBox="0 0 24 24"><path class="pp" d="M8 5v14l11-7z"/></svg></button>
+        <button class="big-play" id="bigPlay" aria-label="Play"><svg class="ico fill" viewBox="0 0 24 24"><path id="bigPP" d="M8 5v14l11-7z"/></svg></button>
       </div>
     </div>
   </section>
 
   <ol class="tracks" id="list"></ol>
+  <div class="empty" id="empty" hidden>
+    <b id="emptyTitle"></b><p id="emptyText"></p>
+    <button class="pill" id="emptyAdd" hidden>Add songs</button>
+  </div>
   <div class="album-foot" id="foot"></div>
   </main>
 </div>
@@ -571,8 +635,8 @@
   <div class="np-inner">
     <div class="np-top">
       <button id="npClose" aria-label="Close"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
-      <div class="from">Playing from album<b id="npAlbum"></b></div>
-      <button aria-label="More"><svg class="ico fill" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+      <div class="from"><span id="npFrom">Playing from album</span><b id="npAlbum"></b></div>
+      <button id="npMore" aria-label="More"><svg class="ico fill" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
     </div>
     <img class="np-cover" id="npCover" alt="" draggable="false">
     <div class="np-title-row">
@@ -613,6 +677,17 @@
   <div class="sheet-head"><img id="sheetCover" alt=""><div><div class="t" id="sheetTitle"></div><div class="a" id="sheetArtist"></div></div></div>
   <button class="s-item" id="sQueue"><svg class="ico" viewBox="0 0 24 24"><path d="M3 6h13M3 11h13M3 16h8M18 13v8M14 17h8"/></svg>Add to queue</button>
   <button class="s-item" id="sLike"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20.5l-1.3-1.2C5.6 14.7 2.5 11.9 2.5 8.4 2.5 5.6 4.7 3.5 7.4 3.5c1.6 0 3.3.8 4.6 2.2 1.3-1.4 3-2.2 4.6-2.2 2.7 0 4.9 2.1 4.9 4.9 0 3.5-3.1 6.3-8.2 10.9z"/></svg><span id="sLikeText">Like</span></button>
+  <button class="s-item" id="sAddPl"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/></svg>Add to playlist</button>
+  <button class="s-item" id="sRemove" hidden><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12h8"/></svg>Remove from this playlist</button>
+  <button class="s-item" id="sGoAlbum" hidden><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="2.5"/></svg>Go to album</button>
+</div>
+
+<!-- Add a song to a playlist -->
+<div class="sheet" id="plSheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="sheet-title">Add to playlist</div>
+  <button class="s-item" id="plNew"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New playlist</button>
+  <ul class="pl-pick" id="plPick"></ul>
 </div>
 
 <!-- Album options (the ⋯ next to the download icon) -->
@@ -621,18 +696,41 @@
   <div class="sheet-head"><img id="aSheetCover" alt=""><div><div class="t" id="aSheetTitle"></div><div class="a" id="aSheetSub"></div></div></div>
   <button class="s-item" id="sEditOrder"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h11M4 12h11M4 17h11M19 5v14M16.5 7.5 19 5l2.5 2.5M16.5 16.5 19 19l2.5-2.5"/></svg>Edit song order</button>
   <button class="s-item" id="sResetOrder" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Reset to original order</button>
+  <button class="s-item" id="sAddSongs" hidden><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/></svg>Add songs</button>
+  <button class="s-item" id="sRename" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg>Rename</button>
+  <button class="s-item" id="sDelete" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Delete playlist</button>
 </div>
 
 <!-- Edit song order -->
 <section class="edit" id="edit" aria-hidden="true" aria-label="Edit song order">
   <header class="edit-head">
     <button id="editCancel">Cancel</button>
-    <b>Edit song order</b>
+    <b id="editTitle">Edit song order</b>
     <button class="save" id="editSave">Save</button>
   </header>
-  <div class="edit-tip">Drag ≡ to move a song</div>
+  <div class="edit-tip" id="editTip">Drag ≡ to move a song</div>
   <ol class="edit-list" id="editList"></ol>
 </section>
+
+<!-- Add songs to a playlist -->
+<section class="edit" id="picker" aria-hidden="true" aria-label="Add songs">
+  <header class="edit-head">
+    <span></span>
+    <b id="pickTitle">Add songs</b>
+    <button class="save" id="pickDone">Done</button>
+  </header>
+  <div id="pickList"></div>
+</section>
+
+<!-- Name a playlist / confirm -->
+<div class="dlg" id="dlg" aria-hidden="true">
+  <form class="dlg-box" id="dlgForm" autocomplete="off">
+    <h2 id="dlgTitle"></h2>
+    <input id="dlgInput" type="text" maxlength="60" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Playlist name">
+    <p id="dlgText"></p>
+    <div class="dlg-btns"><button type="button" class="dlg-cancel" id="dlgCancel">Cancel</button><button type="submit" class="pill" id="dlgOk"></button></div>
+  </form>
+</div>
 
 <!-- Settings -->
 <aside class="drawer" id="drawer" aria-hidden="true">
@@ -641,15 +739,16 @@
     <div><div class="pname" id="pname"></div><div class="psub" id="psub"></div></div>
   </div>
   <div class="d-label">Settings</div>
-  <button class="d-item" id="replayGift"><svg class="ico" viewBox="0 0 24 24"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7C10.5 4 7 3.5 7 5.8 7 7 9.5 7 12 7zM12 7c1.5-3 5-3.5 5-1.2C17 7 14.5 7 12 7z"/></svg><span>Replay the gift<small>Unwrap it all over again</small></span></button>
+  <button class="d-item" id="dArchive"><svg class="ico" viewBox="0 0 24 24"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7C10.5 4 7 3.5 7 5.8 7 7 9.5 7 12 7zM12 7c1.5-3 5-3.5 5-1.2C17 7 14.5 7 12 7z"/></svg><span>Archive<small>Replay your stories</small></span></button>
   <div class="d-item"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5v8M8.5 12l3.5 3.5 3.5-3.5"/></svg><span>Downloaded<small id="dlStatus">Checking…</small></span></div>
   <div class="d-item"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20.5l-1.3-1.2C5.6 14.7 2.5 11.9 2.5 8.4 2.5 5.6 4.7 3.5 7.4 3.5c1.6 0 3.3.8 4.6 2.2 1.3-1.4 3-2.2 4.6-2.2 2.7 0 4.9 2.1 4.9 4.9 0 3.5-3.1 6.3-8.2 10.9z"/></svg><span>Liked songs<small id="likedCount"></small></span></div>
+  <button class="d-item" id="logout"><svg class="ico" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg><span>Log out<small>The password is needed to get back in</small></span></button>
   <div class="drawer-foot" id="dfoot"></div>
 </aside>
 
 <div class="toast" id="toast" role="status"></div>
 
-<!-- Welcome: wrapped gift → password → Wrapped stories -->
+<!-- The gift (with the password when logged out) → a Wrapped-style story -->
 <div class="onboard" id="onboard" hidden>
   <section class="gift-stage" id="giftStage">
     <div class="g-kicker" id="gKicker"></div>
@@ -667,9 +766,11 @@
     </form>
     <button class="hint-btn" id="hintBtn" type="button">Need a hint?</button>
     <p class="hint" id="hint" aria-live="polite"></p>
+    <button class="unwrap-btn open-btn" id="openGift" type="button" hidden>Open it</button>
   </section>
   <section class="story" id="story" hidden>
     <div class="sbars" id="sbars"></div>
+    <button class="story-close" id="storyClose" aria-label="Close"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <button class="story-skip" id="storySkip">Skip</button>
     <div id="slides"></div>
     <div class="tap prev" id="tapPrev"></div><div class="tap next" id="tapNext"></div>
@@ -682,39 +783,85 @@
 <audio id="audio" preload="metadata" playsinline></audio>
 
 <script>
-  const A = self.ALBUM;
+  const APP = self.APP;
+  const W = APP.welcome || {};
   const $ = (id) => document.getElementById(id);
   const $$ = (sel) => [...document.querySelectorAll(sel)];
   const audio = $("audio");
   const PLAY = "M8 5v14l11-7z";
   const PAUSE = "M6 5h4v14H6zM14 5h4v14h-4z";
-  const N = A.tracks.length;
+  const NOTE = `<svg class="ico" viewBox="0 0 24 24"><path d="M9 18V6l11-2v12M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM20 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z"/></svg>`;
   const store = {
     get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
   };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const fmt = (s) => !isFinite(s) ? "0:00" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  const profile = W.to || "You";
 
-  let current = -1;          // index into A.tracks
-  // The album's song order, as rearranged on this phone (saved by file name)
-  const natural = [...Array(N).keys()];
-  let albumOrder = (() => {
-    const saved = store.get("songOrder", null);
-    if (!Array.isArray(saved)) return natural;
-    const idx = saved.map((f) => A.tracks.findIndex((t) => t.file === f)).filter((i) => i >= 0);
-    natural.forEach((i) => { if (!idx.includes(i)) idx.push(i); });   // songs added later go at the end
-    return [...new Set(idx)];
+  // ── Songs, albums and playlists ──
+  // Every song of every album lives in T; songs are referred to by their index there.
+  const ALBUMS = APP.albums;
+  const T = [];
+  ALBUMS.forEach((a) => a.tracks.forEach((t) => T.push({ ...t, album: a, artist: t.artist || a.artist })));
+  const byFile = new Map(T.map((t, g) => [t.file, g]));
+  const getAlbum = (id) => ALBUMS.find((a) => a.id === id);
+  const art512 = (a) => a.cover.replace(/\.jpg$/i, "-512.jpg");
+
+  // Album song orders as rearranged on this phone, saved by file name
+  // (older versions saved a single list for the one album there was)
+  const orders = store.get("songOrders", null) || (() => {
+    const o = {}, legacy = store.get("songOrder", null);
+    if (Array.isArray(legacy) && ALBUMS[0]) o[ALBUMS[0].id] = legacy;
+    return o;
   })();
-  let order = [...albumOrder];
+  function albumList(a) {
+    const natural = a.tracks.map((t) => byFile.get(t.file));
+    const saved = orders[a.id];
+    if (!Array.isArray(saved)) return natural;
+    const idx = saved.map((f) => byFile.get(f)).filter((g) => g != null && T[g].album === a);
+    natural.forEach((g) => { if (!idx.includes(g)) idx.push(g); });   // songs added later go at the end
+    return [...new Set(idx)];
+  }
+
+  let playlists = store.get("playlists", []);   // [{ id, name, files: [...] }]
+  const savePlaylists = () => store.set("playlists", playlists);
+  const getPl = (id) => playlists.find((p) => p.id === id);
+
+  // A collection is anything a song list is shown or played from: { type: "album" | "playlist", id }
+  const sameCol = (a, b) => !!a && !!b && a.type === b.type && a.id === b.id;
+  function listOf(c) {
+    if (!c) return [];
+    if (c.type === "album") { const a = getAlbum(c.id); return a ? albumList(a) : []; }
+    const p = getPl(c.id);
+    return p ? p.files.map((f) => byFile.get(f)).filter((g) => g != null) : [];
+  }
+  const colName = (c) => (c.type === "album" ? (getAlbum(c.id) || {}).title : (getPl(c.id) || {}).name) || "";
+  // Cover for a collection: the album's own, or a playlist's first cover / a 2×2 mosaic
+  function coversOf(c) {
+    if (c.type === "album") return [getAlbum(c.id).cover];
+    return [...new Set(listOf(c).map((g) => T[g].album.cover))];
+  }
+  function artHTML(c) {
+    const cv = coversOf(c);
+    if (!cv.length) return `<div class="art-empty">${NOTE}</div>`;
+    if (cv.length < 4) return `<img src="${esc(cv[0])}" alt="">`;
+    return `<div class="mosaic">${cv.slice(0, 4).map((u) => `<img src="${esc(u)}" alt="">`).join("")}</div>`;
+  }
+
+  let current = -1;          // index into T of the loaded song
+  let ctx = null;            // the collection being played
+  let order = [];            // play order of ctx (shuffled or not)
   let pos = 0;               // position within `order`
   let shuffle = store.get("shuffle", false);
-  let repeat = store.get("repeat", 0);   // 0 off, 1 loop album, 2 loop song
+  let repeat = store.get("repeat", 0);   // 0 off, 1 loop all, 2 loop song
   let liked = store.get("liked", {});
   let queue = [];            // songs added with "Add to queue", played before the rest
   let history = [];          // what played before, so "previous" can step back
   let curPos = 0;            // `pos` as it was when the current song started
   let view = "library";
-
-  const fmt = (s) => !isFinite(s) ? "0:00" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  let viewCol = null;        // the album / playlist page that's open
 
   // Horizontal swipe on an element, leaving vertical scrolling alone
   function swipeable(el, { move, end }) {
@@ -744,27 +891,71 @@
     el.addEventListener("pointerdown", (e) => (el._y0 = e.clientY));
   }
 
-  // ── Album page ──
-  document.title = A.title;
-  [$("cover"), $("avatar"), $("miniCover"), $("npCover")].forEach((el) => (el.src = A.cover));
-  $("title").textContent = $("topTitle").textContent = $("npAlbum").textContent = A.title;
-  $("artist").textContent = A.artist;
-  $("meta").textContent = `Album · ${A.year}`;
+  // ── Song lengths, for the "10 songs, 37 min" line ──
+  const dur = {};
+  T.forEach((t) => {
+    const p = new Audio(); p.preload = "metadata"; p.src = t.file;
+    p.onloadedmetadata = () => { dur[t.file] = p.duration; if (view === "album") renderFoot(); };
+  });
 
-  A.tracks.forEach((t, i) => {
+  // ── Tint the page / player with a cover's main colour ──
+  const tints = {};
+  function tint(src, page) {
+    const set = ([a, b]) => {
+      document.documentElement.style.setProperty(page ? "--tint" : "--np-tint", a);
+      document.documentElement.style.setProperty(page ? "--tint-dark" : "--np-dark", b);
+    };
+    if (!src) return set(["hsl(262 22% 34%)", "hsl(262 20% 22%)"]);
+    if (tints[src]) return set(tints[src]);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas"); c.width = c.height = 24;
+        const x = c.getContext("2d"); x.drawImage(img, 0, 0, 24, 24);
+        const d = x.getImageData(0, 0, 24, 24).data;
+        let r = 0, g = 0, b = 0, w = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
+          const wt = 1 + (mx - mn);          // favour colourful pixels
+          r += d[i] * wt; g += d[i + 1] * wt; b += d[i + 2] * wt; w += wt;
+        }
+        const [h, s] = rgbToHsl(r / w, g / w, b / w);
+        tints[src] = [`hsl(${h} ${Math.min(s, 55)}% 34%)`, `hsl(${h} ${Math.min(s, 50)}% 22%)`];
+        set(tints[src]);
+      } catch (e) {}
+    };
+    img.src = src;
+  }
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+    if (mx === mn) return [0, 0, l * 100];
+    const dd = mx - mn, s = l > .5 ? dd / (2 - mx - mn) : dd / (mx + mn);
+    const h = mx === r ? (g - b) / dd + (g < b ? 6 : 0) : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4;
+    return [Math.round(h * 60), Math.round(s * 100), l * 100];
+  }
+
+  // ═════════════ ALBUM / PLAYLIST PAGE ═════════════
+  document.title = "Little us";
+  let rows = [];
+  function makeRow(g) {
+    const t = T[g];
     const li = document.createElement("li");
     li.className = "track";
     li.innerHTML = `<div class="swipe-bg"><svg class="ico" viewBox="0 0 24 24"><path d="M3 6h13M3 11h13M3 16h8M18 13v8M14 17h8"/></svg></div>
       <div class="track-inner">
         <div class="info"><div class="t"><span class="eq"><i></i><i></i><i></i></span><span class="name"></span></div><div class="a"></div></div>
-        <button class="more" aria-label="More options for ${t.title.replace(/"/g, "")}"><svg class="ico fill" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
+        <button class="more" aria-label="More options for ${esc(t.title)}"><svg class="ico fill" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
       </div>`;
     li.querySelector(".name").textContent = t.title;
-    li.querySelector(".a").textContent = A.artist;
-    li.dataset.i = i;
-    li.onclick = () => { if (!li._swiped) i === current ? toggle() : start(i); };
+    li.querySelector(".a").textContent = t.artist;
+    li.dataset.g = g;
+    li.onclick = () => {
+      if (li._swiped) return;
+      g === current && sameCol(ctx, viewCol) ? toggle() : start(viewCol, g);
+    };
     pressable(li);
-    li.querySelector(".more").onclick = (e) => { e.stopPropagation(); openSheet(i); };
+    li.querySelector(".more").onclick = (e) => { e.stopPropagation(); openSheet(g); };
 
     // Swipe right to add to queue
     const inner = li.querySelector(".track-inner"), bg = li.querySelector(".swipe-bg");
@@ -780,79 +971,89 @@
       end(dx) {
         inner.style.transition = bg.style.transition = "";
         inner.style.transform = ""; bg.style.opacity = ""; bg.classList.remove("armed");
-        if (dx > 72) addToQueue(i);
+        if (dx > 72) addToQueue(g);
       },
     });
-    $("list").appendChild(li);
-  });
-  const rows = [...$("list").children];   // indexed by track number, not display order
-  const layoutRows = () => albumOrder.forEach((i) => $("list").appendChild(rows[i]));
-  layoutRows();
+    return li;
+  }
 
-  // Total length for the footer, like "3 songs, 1 min 15 sec"
-  let total = 0, loaded = 0;
-  const renderFoot = () => {
+  function openCol(c) { viewCol = c; renderCol(); setView("album"); }
+  function renderCol() {
+    const c = viewCol;
+    if (!c) return;
+    const a = c.type === "album" && getAlbum(c.id), p = c.type === "playlist" && getPl(c.id);
+    if (!a && !p) { viewCol = null; return setView("library"); }
+    const list = listOf(c);
+    $("coverBox").className = "album-cover art";
+    $("coverBox").innerHTML = artHTML(c);
+    $("title").textContent = $("topTitle").textContent = colName(c);
+    $("avatar").innerHTML = a ? `<img src="${esc(a.cover)}" alt="">` : esc(profile.trim()[0].toUpperCase());
+    $("artist").textContent = a ? a.artist : profile;
+    $("meta").textContent = a ? `Album · ${a.year}` : `Playlist · ${plural(list.length, "song")}`;
+    tint(coversOf(c)[0], true);
+
+    $("list").innerHTML = "";
+    rows = list.map(makeRow);
+    rows.forEach((r) => $("list").appendChild(r));
+    $("empty").hidden = list.length > 0;
+    $("emptyTitle").textContent = a ? "Songs coming soon" : "Let's build your playlist";
+    $("emptyText").textContent = a ? "This album is still being recorded." : "Add songs from any album.";
+    $("emptyAdd").hidden = !p;
+    $("bigPlay").classList.toggle("off", !list.length);
+    $("foot").hidden = !list.length;
+    renderFoot();
+    syncUI();
+  }
+  // Footer: "2026 · 10 songs, 37 min 14 sec"
+  function renderFoot() {
+    if (!viewCol) return;
+    const list = listOf(viewCol), a = viewCol.type === "album" && getAlbum(viewCol.id);
+    const known = list.filter((g) => dur[T[g].file]);
+    const total = known.reduce((s, g) => s + dur[T[g].file], 0);
     const m = Math.floor(total / 60), s = Math.round(total % 60);
     $("foot").innerHTML = `<div class="date"></div><div class="len"></div><div class="ded"></div>`;
-    $("foot").querySelector(".date").textContent = A.year;
-    $("foot").querySelector(".len").textContent = `${N} song${N === 1 ? "" : "s"}` + (loaded === N ? `, ${m} min ${s} sec` : "");
-    $("foot").querySelector(".ded").textContent = A.dedication || "";
-  };
-  renderFoot();
-  A.tracks.forEach((t) => {
-    const p = new Audio(); p.preload = "metadata"; p.src = t.file;
-    p.onloadedmetadata = () => { total += p.duration; loaded++; renderFoot(); };
-  });
-
-  // Tint the page with the cover's main colour
-  const img = new Image();
-  img.onload = () => {
-    try {
-      const c = document.createElement("canvas"); c.width = c.height = 24;
-      const x = c.getContext("2d"); x.drawImage(img, 0, 0, 24, 24);
-      const d = x.getImageData(0, 0, 24, 24).data;
-      let r = 0, g = 0, b = 0, w = 0;
-      for (let i = 0; i < d.length; i += 4) {
-        const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
-        const wt = 1 + (mx - mn);          // favour colourful pixels
-        r += d[i] * wt; g += d[i + 1] * wt; b += d[i + 2] * wt; w += wt;
-      }
-      const [h, s] = rgbToHsl(r / w, g / w, b / w);
-      document.documentElement.style.setProperty("--tint", `hsl(${h} ${Math.min(s, 55)}% 34%)`);
-      document.documentElement.style.setProperty("--tint-dark", `hsl(${h} ${Math.min(s, 50)}% 22%)`);
-    } catch (e) {}
-  };
-  img.src = A.cover;
-  function rgbToHsl(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
-    if (mx === mn) return [0, 0, l * 100];
-    const dd = mx - mn, s = l > .5 ? dd / (2 - mx - mn) : dd / (mx + mn);
-    const h = mx === r ? (g - b) / dd + (g < b ? 6 : 0) : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4;
-    return [Math.round(h * 60), Math.round(s * 100), l * 100];
+    $("foot").querySelector(".date").textContent = a ? a.year : "";
+    $("foot").querySelector(".len").textContent = plural(list.length, "song") + (known.length === list.length && list.length ? `, ${m} min ${s} sec` : "");
+    $("foot").querySelector(".ded").textContent = (a && a.dedication) || "";
   }
+  $("bigPlay").onclick = () => {
+    if (!viewCol) return;
+    if (sameCol(ctx, viewCol) && current >= 0) return toggle();
+    const list = listOf(viewCol);
+    if (!list.length) return toast(viewCol.type === "album" ? "Songs coming soon" : "Add some songs first");
+    start(viewCol, shuffle ? list[Math.floor(Math.random() * list.length)] : list[0]);
+  };
+  $("emptyAdd").onclick = () => openPicker(viewCol.id);
 
   // Title bar appears once the album title scrolls away
   addEventListener("scroll", () => $("topbar").classList.toggle("show", view === "album" && scrollY > $("title").offsetTop), { passive: true });
 
-  // ── Queue / shuffle ──
+  // ── Shuffle / loop ──
   function buildOrder(first) {
-    order = [...albumOrder];
+    order = listOf(ctx);
+    const has = first != null && order.includes(first);
     if (shuffle) {
-      for (let i = N - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-      if (first != null) { order.splice(order.indexOf(first), 1); order.unshift(first); }
+      for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+      if (has) { order.splice(order.indexOf(first), 1); order.unshift(first); }
     }
-    pos = first == null ? 0 : order.indexOf(first);
+    // -1 when the song playing is no longer in the list (taken out of a playlist)
+    pos = has ? order.indexOf(first) : first == null ? 0 : -1;
+  }
+  // After a playlist or album order changes while it's playing
+  function refreshOrder(c) {
+    if (!ctx || (c && !sameCol(c, ctx))) return;
+    history = [];
+    buildOrder(current >= 0 ? current : null);
   }
   function setShuffle(on) {
     shuffle = on; store.set("shuffle", on);
     $$(".shuffle-btn").forEach((b) => { b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
-    if (current >= 0) buildOrder(current);
+    if (current >= 0 && ctx) buildOrder(current);
   }
   $$(".shuffle-btn").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); setShuffle(!shuffle); }));
   setShuffle(shuffle);
 
-  const REPEAT_LABEL = ["Loop off", "Looping the album", "Looping this song"];
+  const REPEAT_LABEL = ["Loop off", "Looping all songs", "Looping this song"];
   function setRepeat(r, announce) {
     repeat = r; store.set("repeat", r);
     $$(".repeat-btn").forEach((b) => {
@@ -866,12 +1067,16 @@
   setRepeat(repeat);
 
   // ── Playback ──
-  function start(i) { buildOrder(i); load(i, true); }
+  function start(c, g) {
+    ctx = { type: c.type, id: c.id };
+    buildOrder(g);
+    load(g, true);
+    memorizeAll(order);
+  }
   // Whole songs are kept in memory (blob URLs). Resuming or skipping from the lock
   // screen then never needs the app's offline service, which iOS may have put to sleep.
   const songMem = {};
   const SILENCE = "audio/silence.mp3";
-  const keepInMemory = (i) => A.tracks[i] && memorize(A.tracks[i].file);
   async function memorize(f) {
     if (!f || songMem[f]) return;
     try {
@@ -881,9 +1086,9 @@
       songMem[f] = URL.createObjectURL(new Blob([await res.arrayBuffer()], { type }));
     } catch (e) {}
   }
-  async function keepAllInMemory() {
+  async function memorizeAll(list) {
     await memorize(SILENCE);
-    for (const i of albumOrder) await keepInMemory(i);
+    for (const g of list) await memorize(T[g].file);
   }
 
   // ── Pausing without letting iOS freeze the app ──
@@ -904,7 +1109,7 @@
   function pauseSong() {
     if (soft || current < 0) return;
     if (audio.paused) return syncUI();
-    soft = { file: A.tracks[current].file, time: audio.currentTime, dur: audio.duration };
+    soft = { file: T[current].file, time: audio.currentTime, dur: audio.duration };
     clearTimeout(endTimer); endTimer = null;
     audio.loop = true;
     audio.src = songMem[SILENCE] || SILENCE;
@@ -925,22 +1130,25 @@
     syncUI();
   }
 
-  function load(i, autoplay, back) {
-    if (!back && current >= 0 && i !== current) history.push({ i: current, pos: curPos });
+  function load(g, autoplay, back) {
+    if (!back && current >= 0 && g !== current) history.push({ g: current, pos: curPos });
     advancing = false; clearTimeout(endTimer); endTimer = null;
     if (soft) { soft = null; clearTimeout(softTimer); audio.loop = false; }
-    current = i;
+    current = g;
     curPos = pos;
-    const t = A.tracks[i];
+    const t = T[g];
     audio.src = songMem[t.file] || t.file;
     $("miniTitle").textContent = $("npTitle").textContent = t.title;
-    $("miniArtist").textContent = $("npArtist").textContent = A.artist;
+    $("miniArtist").textContent = $("npArtist").textContent = t.artist;
+    $("miniCover").src = $("npCover").src = t.album.cover;
+    $("npFrom").textContent = ctx && ctx.type === "playlist" ? "Playing from playlist" : "Playing from album";
+    $("npAlbum").textContent = ctx ? colName(ctx) : t.album.title;
+    tint(t.album.cover, false);
     $("lyrics").textContent = t.lyrics || "";
     $("lyricsCard").hidden = !t.lyrics;
     $("about").textContent = t.note || "";
     $("aboutCard").hidden = !t.note;
     $("heart").classList.toggle("on", !!liked[t.file]);
-    rows.forEach((r, j) => r.classList.toggle("active", j === i));
     $("mini").classList.add("show");
     $("dock").classList.add("show");
     // Tell the lock screen the new state *before* the new song details arrive,
@@ -954,55 +1162,55 @@
     syncUI();
   }
   function toggle() {
-    if (current < 0 && queue.length) return start(takeQueued());
-    if (current < 0) return start(shuffle ? Math.floor(Math.random() * N) : albumOrder[0]);
+    if (current < 0) return;
     isPlaying() ? pauseSong() : resumeSong();
   }
   function next(auto) {
-    if (current < 0) return toggle();
+    if (current < 0) return;
     if (queue.length) return load(takeQueued(), true);   // queued songs first
-    if (pos < N - 1) { pos++; return load(order[pos], true); }
-    if (repeat === 1 || !auto) { buildOrder(); return load(order[0], repeat === 1 || !auto); }
-    buildOrder(); load(order[0], false);   // end of album: stop at the first song
+    if (pos < order.length - 1) { pos++; return load(order[pos], true); }
+    buildOrder();
+    if (!order.length) return pauseSong();               // e.g. the playlist was emptied
+    if (repeat === 1 || !auto) return load(order[0], true);
+    load(order[0], false);   // end of the list: stop at the first song
   }
   // `force` skips the "restart if past 3 seconds" rule (used by the swipe)
   function prev(force) {
-    if (current < 0) return toggle();
+    if (current < 0) return;
     if (!force && songTime() > 3) { setSongTime(0); return; }
     if (!history.length) {
       // Nothing played before this song yet (e.g. it was tapped directly):
-      // go to the song before it in the album, wrapping round when looping
+      // go to the song before it in the list, wrapping round when looping
       if (pos > 0) { pos--; return load(order[pos], true, true); }
-      if (repeat === 1 && N > 1) { pos = N - 1; return load(order[pos], true, true); }
+      if (repeat === 1 && order.length > 1) { pos = order.length - 1; return load(order[pos], true, true); }
       setSongTime(0); return;
     }
     const h = history.pop();
     pos = h.pos;
-    load(h.i, true, true);
+    load(h.g, true, true);
   }
 
-  $("bigPlay").onclick = toggle;
   $("npPlay").onclick = toggle;
   $("miniPlay").onclick = (e) => { e.stopPropagation(); toggle(); };
   $("next").onclick = () => next(false);
   $("prev").onclick = () => prev();
 
   // ── Queue ──
-  function takeQueued() { const i = queue.shift(); renderQueue(); return i; }
-  function addToQueue(i) {
-    queue.push(i);
+  function takeQueued() { const g = queue.shift(); renderQueue(); return g; }
+  function addToQueue(g) {
+    queue.push(g);
     renderQueue();
     toast(`Added to queue`);
   }
   function renderQueue() {
     $("queueCard").hidden = !queue.length;
     $("queueList").innerHTML = "";
-    queue.forEach((i) => {
+    queue.forEach((g) => {
       const li = document.createElement("li");
       li.innerHTML = `<img src="" alt=""><div><span></span><small></small></div>`;
-      li.querySelector("img").src = A.cover;
-      li.querySelector("span").textContent = A.tracks[i].title;
-      li.querySelector("small").textContent = A.artist;
+      li.querySelector("img").src = T[g].album.cover;
+      li.querySelector("span").textContent = T[g].title;
+      li.querySelector("small").textContent = T[g].artist;
       $("queueList").appendChild(li);
     });
   }
@@ -1039,17 +1247,16 @@
   audio.addEventListener("pause", cancelEndTimer);
   audio.addEventListener("ended", () => { if (!soft) onTrackEnd(); });   // fallback
 
-  function toggleLike(i) {
-    const f = A.tracks[i].file;
+  function toggleLike(g) {
+    const f = T[g].file;
     liked[f] = !liked[f]; store.set("liked", liked);
-    if (i === current) $("heart").classList.toggle("on", liked[f]);
+    if (g === current) $("heart").classList.toggle("on", liked[f]);
     renderLikedCount();
     toast(liked[f] ? "Added to Liked Songs" : "Removed from Liked Songs");
   }
   $("heart").onclick = () => toggleLike(current);
   function renderLikedCount() {
-    const n = A.tracks.filter((t) => liked[t.file]).length;
-    $("likedCount").textContent = `${n} song${n === 1 ? "" : "s"}`;
+    $("likedCount").textContent = plural(T.filter((t) => liked[t.file]).length, "song");
   }
 
   // Open / close the Now Playing screen
@@ -1085,6 +1292,7 @@
   swipeToChange($("mini"), $("miniTrack"), 110, 60);
   swipeToChange($("npCover"), $("npCover"), 120, 70);
   $("npClose").onclick = () => openNP(false);
+  $("npMore").onclick = () => { if (current >= 0) openSheet(current); };
   // Swipe down to close — only when the swipe is clearly downward, so a
   // sideways swipe on the cover (to change song) never closes the player
   let touch0 = null;
@@ -1103,9 +1311,17 @@
   function syncUI() {
     const playing = isPlaying();
     $$(".pp").forEach((p) => p.setAttribute("d", playing ? PAUSE : PLAY));
-    ["bigPlay", "npPlay", "miniPlay"].forEach((id) => $(id).setAttribute("aria-label", playing ? "Pause" : "Play"));
-    rows.forEach((r) => r.classList.toggle("playing", playing));
-    $("libAlbum").classList.toggle("playing", current >= 0);
+    ["npPlay", "miniPlay"].forEach((id) => $(id).setAttribute("aria-label", playing ? "Pause" : "Play"));
+    // The big green button only shows ⏸ on the page of what's playing
+    const here = playing && sameCol(ctx, viewCol);
+    $("bigPP").setAttribute("d", here ? PAUSE : PLAY);
+    $("bigPlay").setAttribute("aria-label", here ? "Pause" : "Play");
+    rows.forEach((r) => {
+      r.classList.toggle("active", +r.dataset.g === current);
+      r.classList.toggle("playing", playing);
+    });
+    $$("#libList .lib-item[data-type]").forEach((li) =>
+      li.classList.toggle("playing", current >= 0 && sameCol(ctx, { type: li.dataset.type, id: li.dataset.id })));
     // Tell the lock screen whether to show ▶ or ⏸ (during a pause the silent
     // loop is technically playing, so iOS can't work this out on its own)
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
@@ -1165,11 +1381,11 @@
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: t.title,
-      artist: A.artist,
-      album: A.title,
+      artist: t.artist,
+      album: t.album.title,
       artwork: [
-        { src: new URL("cover-512.jpg", location.href).href, sizes: "512x512", type: "image/jpeg" },
-        { src: new URL(A.cover, location.href).href, sizes: "1024x1024", type: "image/jpeg" },
+        { src: new URL(art512(t.album), location.href).href, sizes: "512x512", type: "image/jpeg" },
+        { src: new URL(t.album.cover, location.href).href, sizes: "1024x1024", type: "image/jpeg" },
       ],
     });
   }
@@ -1204,39 +1420,63 @@
     ["loadedmetadata", "play", "pause", "seeked", "ratechange"].forEach((ev) => audio.addEventListener(ev, updatePosition));
   }
 
-  // ═════════════ ONBOARDING ═════════════
-  const W = A.welcome || {};
+  // ═════════════ GIFT + STORIES ═════════════
+  // Logged out: the gift asks for the password, then plays the newest story.
+  // Logged in: a story nobody has seen yet opens with an "Open it" button on
+  // launch; stories in the Archive replay straight from the unwrap animation.
+  const STORIES = APP.stories || [];
+  let loggedIn = store.get("unwrapped", false);
+  let seen = store.get("seenStories", null);
+  if (!Array.isArray(seen)) {   // phones from before stories: the first one was already seen
+    seen = loggedIn && STORIES[0] ? [STORIES[0].id] : [];
+    store.set("seenStories", seen);
+  }
+  const unseen = () => [...STORIES].reverse().find((s) => !seen.includes(s.id));
+  const storyAlbum = (s) => getAlbum(s.album) || ALBUMS[0];
+  let story = null, giftMode = "locked", attempts = 0;
+
+  function daysFor(s) {
+    const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(s.since || "");
+    if (!m) return "[?]";
+    const from = new Date(+m[1], m[2] - 1, +m[3]), to = new Date(+m[1], m[2] - 1 + (s.months || 0), +m[3]);
+    return String(Math.round((to - from) / 864e5));
+  }
   const fill = (str) => String(str || "")
     .replaceAll("{to}", W.to || "")
-    .replaceAll("{artist}", A.artist)
-    .replaceAll("{songs}", N)
-    .replaceAll("{length}", total >= 120 ? `${Math.round(total / 60)} minutes` : `${Math.round(total)} seconds`);
-  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  let attempts = 0;
+    .replaceAll("{artist}", storyAlbum(story).artist)
+    .replaceAll("{songs}", storyAlbum(story).tracks.length)
+    .replaceAll("{days}", daysFor(story));
 
-  $("giftCover").src = W.inside || A.cover;   // the album cover stays hidden until the last slide
   $("gKicker").textContent = W.to ? `For ${W.to}` : "For you";
   $("tag").textContent = `To: ${W.to || "you"}`;
 
-  function showOnboarding() {
+  // mode: "locked" needs the password · "new" has an Open button · "replay" opens by itself
+  function showGift(s, mode) {
+    if (!s) return;
+    story = s; giftMode = mode;
     openNP(false);
-    audio.pause();
+    closeAll();
+    pauseSong();
     attempts = 0;
-    $("gHeading").textContent = W.heading || "Something's waiting for you";
+    $("gHeading").textContent = fill(mode === "locked" ? W.heading : (s.gift && s.gift.heading) || W.heading);
+    $("giftCover").src = (s.gift && s.gift.inside) || storyAlbum(s).cover;
     $("gift").className = "gift";
     $("giftStage").hidden = false;
     $("giftStage").classList.remove("gone");
-    ["unlock", "hintBtn", "hint"].forEach((id) => $(id).classList.remove("gone"));
+    $("unlock").hidden = $("hintBtn").hidden = mode !== "locked";
+    $("openGift").hidden = mode !== "new";
+    ["unlock", "hintBtn", "hint", "openGift"].forEach((id) => $(id).classList.remove("gone"));
     $("hint").textContent = "";
     $("pw").value = "";
     $("story").hidden = true;
     $("onboard").classList.remove("leaving");
     $("onboard").hidden = false;
     document.body.style.overflow = "hidden";
-    if (!W.password) unwrap();   // no password set → just open it
+    if (mode === "replay" || (mode === "locked" && !W.password)) setTimeout(unwrap, 700);
   }
 
   $("hintBtn").onclick = () => ($("hint").textContent = `Psst… ${W.hint}`);
+  $("openGift").onclick = () => unwrap();
 
   $("unlock").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -1251,9 +1491,12 @@
   });
 
   function unwrap() {
+    if ($("gift").classList.contains("open")) return;
+    if (!loggedIn) { loggedIn = true; store.set("unwrapped", true); }
+    if (!seen.includes(story.id)) { seen.push(story.id); store.set("seenStories", seen); }
     $("pw").blur();
-    ["unlock", "hintBtn", "hint"].forEach((id) => $(id).classList.add("gone"));
-    $("gHeading").textContent = `It's all yours${W.to ? ", " + W.to : ""}.`;
+    ["unlock", "hintBtn", "hint", "openGift"].forEach((id) => $(id).classList.add("gone"));
+    $("gHeading").textContent = fill((story.gift && story.gift.opened) || "It's all yours, {to}.");
     $("gift").classList.remove("shake");
     $("unlock").classList.remove("shake");
     $("gift").classList.add("open");
@@ -1279,11 +1522,12 @@
     }
   }
 
-  // ── Wrapped stories ──
-  const SLIDES = A.wrapped || [];
-  let si = 0, heldAt = 0;
+  // ── Wrapped-style slides ──
+  let SLIDES = [], si = 0, heldAt = 0;
 
   function buildSlides() {
+    const al = storyAlbum(story);
+    SLIDES = story.slides || [];
     $("slides").innerHTML = "";
     $("sbars").innerHTML = "";
     SLIDES.forEach((s, i) => {
@@ -1292,10 +1536,10 @@
       const deco = `<div class="deco d${i % 3}"><i></i><i></i></div>`;
       if (s.type === "final") {
         el.innerHTML = `${deco}<div class="kicker">${esc(fill(s.kicker))}</div>
-          <img class="final-cover" src="${esc(A.cover)}" alt="">
-          <div class="final-title">${esc(A.title)}</div><div class="by">${esc(A.artist)}</div>
+          <img class="final-cover" src="${esc(al.cover)}" alt="">
+          <div class="final-title">${esc(al.title)}</div><div class="by">${esc(al.artist)}</div>
           <button class="final-btn">${esc(fill(s.button || "Start listening"))}</button>`;
-        el.querySelector(".final-btn").onclick = finishOnboarding;
+        el.querySelector(".final-btn").onclick = () => finishStory(true);
       } else if (s.photo) {
         el.classList.add("has-photo");
         el.style.setProperty("--tilt", (i % 2 ? 3 : -3) + "deg");
@@ -1330,8 +1574,8 @@
   }
 
   function showStory() {
-    if (!SLIDES.length) return finishOnboarding();
     buildSlides();
+    if (!SLIDES.length) return finishStory(true);
     $("story").hidden = false;
     go(0);
   }
@@ -1345,16 +1589,19 @@
     z.addEventListener("click", () => { if (Date.now() - heldAt < 300) go(si + dir); });
   }
   $("storySkip").onclick = () => go(SLIDES.length - 1);
+  $("storyClose").onclick = () => finishStory(false);
 
-  function finishOnboarding() {
-    store.set("unwrapped", true);
-    setView("album");    // the last slide's button opens the album itself
+  // The last slide's button opens the story's album; ✕ just goes back
+  function finishStory(openAlbum) {
+    if (openAlbum) openCol({ type: "album", id: storyAlbum(story).id });
+    else if (view === "library") renderLib();
     $("onboard").classList.add("leaving");
     document.body.style.overflow = "";
     setTimeout(() => ($("onboard").hidden = true), 600);
   }
 
-  // ═════════════ LIBRARY / SETTINGS / SONG SHEET ═════════════
+  // ═════════════ LIBRARY ═════════════
+  let libFilter = null;      // null (albums + playlists), "albums", "playlists" or "archive"
   function setView(v) {
     view = v;
     $("libView").hidden = v !== "library";
@@ -1362,81 +1609,279 @@
     const el = v === "album" ? $("albumView") : $("libView");
     el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
     $("topbar").classList.remove("show");
+    if (v === "library") renderLib();
     scrollTo(0, 0);
   }
-  $("libCover").src = A.cover;
-  $("libTitle").textContent = A.title;
-  $("libSub").textContent = `Album · ${A.artist}`;
-  $("libAlbum").onclick = () => setView("album");
+  function libItem(artInner, title, sub, onClick, extra = {}) {
+    const li = document.createElement("li");
+    li.className = "lib-item";
+    li.innerHTML = `<div class="art${extra.round ? " round" : ""}${extra.add ? " art-add" : ""}">${artInner}</div>
+      <div><div class="t"></div><div class="a">${extra.pin ? `<svg class="pin ico fill" viewBox="0 0 24 24"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z"/></svg>` : ""}<span></span></div></div>`;
+    li.querySelector(".t").textContent = title;
+    li.querySelector(".a span").textContent = sub;
+    if (extra.col) { li.dataset.type = extra.col.type; li.dataset.id = extra.col.id; }
+    li.onclick = onClick;
+    pressable(li);
+    return li;
+  }
+  function renderLib() {
+    $$("#chips .chip").forEach((c) => c.classList.toggle("on", c.dataset.f === libFilter));
+    const list = $("libList");
+    list.innerHTML = "";
+    if (libFilter === "archive") {
+      [...STORIES].reverse().forEach((s) =>
+        list.appendChild(libItem(`<img src="${esc((s.gift && s.gift.inside) || storyAlbum(s).cover)}" alt="">`, s.title, `Story · ${s.label || ""}`, () => showGift(s, "replay"), { round: true })));
+    } else {
+      if (libFilter !== "playlists") ALBUMS.forEach((a) => {
+        const c = { type: "album", id: a.id };
+        list.appendChild(libItem(artHTML(c), a.title, `Album · ${a.artist}`, () => openCol(c), { pin: true, col: c }));
+      });
+      if (libFilter !== "albums") {
+        playlists.forEach((p) => {
+          const c = { type: "playlist", id: p.id };
+          list.appendChild(libItem(artHTML(c), p.name, `Playlist · ${plural(p.files.length, "song")}`, () => openCol(c), { col: c }));
+        });
+        list.appendChild(libItem(`<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`, "Create playlist", "", () => newPlaylist(), { add: true }));
+      }
+    }
+    syncUI();
+  }
+  $$("#chips .chip").forEach((c) => (c.onclick = () => { libFilter = libFilter === c.dataset.f ? null : c.dataset.f; renderLib(); }));
+  $("libAdd").onclick = () => newPlaylist();
   $$(".lib-btn").forEach((b) => (b.onclick = () => setView("library")));
 
-  // Jiaqi's profile
-  const profile = W.to || "You";
+  // ═════════════ PLAYLISTS ═════════════
+  // A full-screen box for naming a playlist, or (without an input) confirming
+  let dlgOk = null;
+  function openDlg({ title, value, text, ok, input = true, onOk }) {
+    $("dlgTitle").textContent = title;
+    $("dlgInput").hidden = !input;
+    $("dlgInput").value = value || "";
+    $("dlgText").textContent = text || "";
+    $("dlgText").hidden = !text;
+    $("dlgOk").textContent = ok;
+    dlgOk = onOk;
+    $("dlg").classList.add("open"); $("dlg").setAttribute("aria-hidden", "false");
+    if (input) setTimeout(() => { $("dlgInput").focus(); $("dlgInput").select(); }, 50);
+  }
+  const closeDlg = () => { $("dlgInput").blur(); $("dlg").classList.remove("open"); $("dlg").setAttribute("aria-hidden", "true"); };
+  $("dlgCancel").onclick = closeDlg;
+  $("dlgForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("dlgInput").value.trim();
+    if (!$("dlgInput").hidden && !v) return $("dlgInput").focus();
+    closeDlg();
+    if (dlgOk) dlgOk(v);
+  });
+
+  // Create a playlist; with `files`, those songs go straight in (from a song's ⋯)
+  function newPlaylist(files) {
+    closeAll();
+    openDlg({
+      title: "Give your playlist a name", value: `My playlist #${playlists.length + 1}`, ok: "Create",
+      onOk(name) {
+        const p = { id: "pl" + Date.now().toString(36), name, files: [...(files || [])] };
+        playlists.push(p); savePlaylists();
+        if (files) { toast(`Added to ${name}`); if (view === "library") renderLib(); }
+        else openCol({ type: "playlist", id: p.id });
+      },
+    });
+  }
+  function addToPlaylist(p, g) {
+    const f = T[g].file;
+    if (p.files.includes(f)) return toast(`Already in ${p.name}`);
+    p.files.push(f); savePlaylists();
+    toast(`Added to ${p.name}`);
+    afterPlaylistChange(p);
+  }
+  function afterPlaylistChange(p) {
+    const c = { type: "playlist", id: p.id };
+    refreshOrder(c);
+    if (view === "album" && sameCol(viewCol, c)) renderCol();
+    if (view === "library") renderLib();
+  }
+
+  // Song ⋯ → Add to playlist
+  let plFor = 0;
+  function openPlSheet(g) {
+    plFor = g;
+    const ul = $("plPick");
+    ul.innerHTML = "";
+    playlists.forEach((p) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<div class="art">${artHTML({ type: "playlist", id: p.id })}</div><div><div class="t"></div><div class="a"></div></div>`;
+      li.querySelector(".t").textContent = p.name;
+      li.querySelector(".a").textContent = p.files.includes(T[g].file) ? "Already added" : plural(p.files.length, "song");
+      li.onclick = () => { closeAll(); addToPlaylist(p, g); };
+      ul.appendChild(li);
+    });
+    openPanel("plSheet");
+  }
+  $("plNew").onclick = () => newPlaylist([T[plFor].file]);
+
+  // Playlist page → Add songs: every song, grouped by album, with a + / ✓ each
+  let pickFor = null;
+  function openPicker(id) {
+    const p = getPl(id);
+    if (!p) return;
+    pickFor = p;
+    closeAll();
+    $("pickTitle").textContent = `Add to ${p.name}`;
+    const box = $("pickList");
+    box.innerHTML = "";
+    ALBUMS.filter((a) => a.tracks.length).forEach((a) => {
+      const h = document.createElement("div");
+      h.className = "pick-head"; h.textContent = a.title;
+      box.appendChild(h);
+      const ol = document.createElement("ol");
+      ol.className = "edit-list";
+      albumList(a).forEach((g) => {
+        const li = document.createElement("li");
+        li.className = "edit-row";
+        li.innerHTML = `<img alt=""><div class="info"><div class="t"></div><div class="a"></div></div>
+          <button class="pick-btn" aria-label="Add"></button>`;
+        li.querySelector("img").src = a.cover;
+        li.querySelector(".t").textContent = T[g].title;
+        li.querySelector(".a").textContent = T[g].artist;
+        const btn = li.querySelector(".pick-btn");
+        const paint = () => {
+          const on = p.files.includes(T[g].file);
+          btn.classList.toggle("on", on);
+          btn.setAttribute("aria-label", on ? `Remove ${T[g].title}` : `Add ${T[g].title}`);
+          btn.innerHTML = `<svg class="ico" viewBox="0 0 24 24"><path d="${on ? "M5 12.5l4.5 4.5L19 7.5" : "M12 6v12M6 12h12"}"/></svg>`;
+        };
+        li.onclick = () => {
+          const f = T[g].file, k = p.files.indexOf(f);
+          if (k >= 0) p.files.splice(k, 1); else p.files.push(f);
+          savePlaylists(); paint();
+        };
+        paint();
+        ol.appendChild(li);
+      });
+      box.appendChild(ol);
+    });
+    $("picker").classList.add("open"); $("picker").setAttribute("aria-hidden", "false");
+  }
+  $("pickDone").onclick = () => {
+    $("picker").classList.remove("open"); $("picker").setAttribute("aria-hidden", "true");
+    if (pickFor) afterPlaylistChange(pickFor);
+  };
+
+  // ═════════════ SETTINGS / SHEETS ═════════════
   $("pfpBtn").textContent = $("pfpBig").textContent = profile.trim()[0].toUpperCase();
   $("pname").textContent = profile;
-  $("psub").textContent = `Made for you by ${A.artist}`;
-  $("dfoot").textContent = `${A.title} · v${A.version}`;
+  $("psub").textContent = `Made for you by ${ALBUMS[0].artist}`;
+  $("dfoot").textContent = `Little us · v${APP.version}`;
   renderLikedCount();
 
-  const closeAll = () => {
-    for (const id of ["drawer", "sheet", "albumSheet"]) { $(id).classList.remove("open"); $(id).setAttribute("aria-hidden", "true"); }
+  function closeAll() {
+    for (const id of ["drawer", "sheet", "albumSheet", "plSheet"]) { $(id).classList.remove("open"); $(id).setAttribute("aria-hidden", "true"); }
     $("scrim").classList.remove("show");
-  };
+  }
   const openPanel = (id) => { $(id).classList.add("open"); $(id).setAttribute("aria-hidden", "false"); $("scrim").classList.add("show"); };
   $("scrim").onclick = closeAll;
   $("pfpBtn").onclick = () => openPanel("drawer");
   $$(".settings-btn").forEach((b) => (b.onclick = () => openPanel("drawer")));
-  $("replayGift").onclick = () => { closeAll(); showOnboarding(); };
+  $("dArchive").onclick = () => { closeAll(); libFilter = "archive"; setView("library"); };
+  $("logout").onclick = () => {
+    closeAll();
+    openDlg({
+      title: "Log out?", text: "You'll need the password to get back in. Your playlists and likes stay on this phone.", ok: "Log out", input: false,
+      onOk() {
+        loggedIn = false; store.set("unwrapped", false);
+        showGift(unseen() || STORIES[STORIES.length - 1], "locked");
+      },
+    });
+  };
   swipeable($("drawer"), { move() {}, end(dx) { if (dx < -60) closeAll(); } });   // swipe left to close
 
+  // Song ⋯
   let sheetFor = 0;
-  function openSheet(i) {
-    sheetFor = i;
-    $("sheetCover").src = A.cover;
-    $("sheetTitle").textContent = A.tracks[i].title;
-    $("sheetArtist").textContent = A.artist;
-    const on = !!liked[A.tracks[i].file];
+  const inPlaylist = () => view === "album" && viewCol && viewCol.type === "playlist";
+  function openSheet(g) {
+    sheetFor = g;
+    $("sheetCover").src = T[g].album.cover;
+    $("sheetTitle").textContent = T[g].title;
+    $("sheetArtist").textContent = T[g].artist;
+    const on = !!liked[T[g].file];
     $("sLike").classList.toggle("on", on);
     $("sLikeText").textContent = on ? "Remove from Liked Songs" : "Like";
+    $("sRemove").hidden = !inPlaylist() || $("np").classList.contains("open");
+    $("sGoAlbum").hidden = view === "album" && viewCol && sameCol(viewCol, { type: "album", id: T[g].album.id }) && !$("np").classList.contains("open");
     openPanel("sheet");
   }
   $("sQueue").onclick = () => { closeAll(); addToQueue(sheetFor); };
   $("sLike").onclick = () => { closeAll(); toggleLike(sheetFor); };
+  $("sAddPl").onclick = () => {
+    closeAll();
+    if (!playlists.length) return newPlaylist([T[sheetFor].file]);
+    setTimeout(() => openPlSheet(sheetFor), 120);
+  };
+  $("sRemove").onclick = () => {
+    closeAll();
+    const p = getPl(viewCol.id), k = p.files.indexOf(T[sheetFor].file);
+    if (k >= 0) { p.files.splice(k, 1); savePlaylists(); toast(`Removed from ${p.name}`); afterPlaylistChange(p); }
+  };
+  $("sGoAlbum").onclick = () => { closeAll(); openNP(false); openCol({ type: "album", id: T[sheetFor].album.id }); };
 
-  pressable($("libAlbum"));
-
-  // ── Album ⋯ menu → Edit song order ──
-  const isCustomOrder = () => albumOrder.some((v, k) => v !== k);
+  // Album / playlist ⋯
+  const isCustomOrder = (a) => albumList(a).some((g, k) => T[g].file !== a.tracks[k].file);
   $("albumMore").onclick = () => {
-    $("aSheetCover").src = A.cover;
-    $("aSheetTitle").textContent = A.title;
-    $("aSheetSub").textContent = `Album · ${A.artist}`;
-    $("sResetOrder").hidden = !isCustomOrder();
+    const c = viewCol, a = c.type === "album" && getAlbum(c.id);
+    $("aSheetCover").outerHTML = `<div class="art" id="aSheetCover" style="width:48px;height:48px;flex:none">${artHTML(c)}</div>`;
+    $("aSheetTitle").textContent = colName(c);
+    $("aSheetSub").textContent = a ? `Album · ${a.artist}` : `Playlist · ${profile}`;
+    $("sEditOrder").hidden = a ? a.tracks.length < 2 : false;
+    $("sEditOrder").lastChild.textContent = a ? "Edit song order" : "Edit playlist";
+    $("sResetOrder").hidden = !a || !isCustomOrder(a);
+    ["sAddSongs", "sRename", "sDelete"].forEach((id) => ($(id).hidden = !!a));
     openPanel("albumSheet");
   };
-  $("sResetOrder").onclick = () => { closeAll(); applyOrder(natural); toast("Back to the original order"); };
+  $("sResetOrder").onclick = () => {
+    closeAll();
+    delete orders[viewCol.id]; store.set("songOrders", orders);
+    refreshOrder(viewCol); renderCol();
+    toast("Back to the original order");
+  };
   $("sEditOrder").onclick = () => { closeAll(); openEdit(); };
+  $("sAddSongs").onclick = () => openPicker(viewCol.id);
+  $("sRename").onclick = () => {
+    const p = getPl(viewCol.id);
+    closeAll();
+    openDlg({ title: "Rename playlist", value: p.name, ok: "Save", onOk(name) { p.name = name; savePlaylists(); renderCol(); if (sameCol(ctx, viewCol)) $("npAlbum").textContent = name; } });
+  };
+  $("sDelete").onclick = () => {
+    const p = getPl(viewCol.id);
+    closeAll();
+    openDlg({
+      title: `Delete ${p.name}?`, text: "The songs stay in their albums.", ok: "Delete", input: false,
+      onOk() {
+        playlists = playlists.filter((x) => x !== p); savePlaylists();
+        refreshOrder({ type: "playlist", id: p.id });
+        viewCol = null; setView("library");
+        toast("Playlist deleted");
+      },
+    });
+  };
 
-  function applyOrder(newOrder) {
-    albumOrder = [...newOrder];
-    store.set("songOrder", albumOrder.map((i) => A.tracks[i].file));
-    layoutRows();
-    history = [];
-    if (current >= 0) buildOrder(current); else buildOrder();
-  }
-
+  // ── Edit an album's song order, or a playlist's order and songs ──
   function openEdit() {
+    const c = viewCol, isPl = c.type === "playlist";
+    $("editTitle").textContent = isPl ? "Edit playlist" : "Edit song order";
+    $("editTip").textContent = isPl ? "Drag ≡ to move a song, tap ⊖ to take it out" : "Drag ≡ to move a song";
     const list = $("editList");
     list.innerHTML = "";
-    albumOrder.forEach((i) => {
+    listOf(c).forEach((g) => {
       const li = document.createElement("li");
       li.className = "edit-row";
-      li.dataset.i = i;
-      li.innerHTML = `<img alt=""><div class="info"><div class="t"></div><div class="a"></div></div>
+      li.dataset.g = g;
+      li.innerHTML = `${isPl ? `<button class="rm" aria-label="Remove"><svg class="ico" viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>` : ""}
+        <img alt=""><div class="info"><div class="t"></div><div class="a"></div></div>
         <span class="handle" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16M4 12h16M4 16h16"/></svg></span>`;
-      li.querySelector("img").src = A.cover;
-      li.querySelector(".t").textContent = A.tracks[i].title;
-      li.querySelector(".a").textContent = A.artist;
+      li.querySelector("img").src = T[g].album.cover;
+      li.querySelector(".t").textContent = T[g].title;
+      li.querySelector(".a").textContent = T[g].artist;
+      if (isPl) li.querySelector(".rm").onclick = () => li.classList.add("gone");
       dragToReorder(li, li.querySelector(".handle"), list);
       list.appendChild(li);
     });
@@ -1446,9 +1891,13 @@
   const closeEdit = () => { $("edit").classList.remove("open"); $("edit").setAttribute("aria-hidden", "true"); };
   $("editCancel").onclick = closeEdit;
   $("editSave").onclick = () => {
-    applyOrder([...$("editList").children].map((li) => +li.dataset.i));
+    const files = [...$("editList").children].filter((li) => !li.classList.contains("gone")).map((li) => T[+li.dataset.g].file);
+    if (viewCol.type === "album") { orders[viewCol.id] = files; store.set("songOrders", orders); }
+    else { getPl(viewCol.id).files = files; savePlaylists(); }
+    refreshOrder(viewCol);
+    renderCol();
     closeEdit();
-    toast("Song order saved");
+    toast(viewCol.type === "album" ? "Song order saved" : "Playlist saved");
   };
 
   // Drag a row by its ≡ handle; neighbours slide out of the way
@@ -1462,6 +1911,7 @@
       el.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1)";
       el.style.transform = "";
     };
+    const sib = (el, dir) => { do { el = el[dir]; } while (el && el.classList.contains("gone")); return el; };
     handle.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       active = true; startY = e.clientY;
@@ -1472,7 +1922,7 @@
       if (!active) return;
       let dy = e.clientY - startY;
       const mid = li.offsetTop + dy + li.offsetHeight / 2;
-      const nxt = li.nextElementSibling, prv = li.previousElementSibling;
+      const nxt = sib(li, "nextElementSibling"), prv = sib(li, "previousElementSibling");
       // swap a bit past the halfway point; the gap between 15% and 85% stops flicker
       if (nxt && mid > nxt.offsetTop + nxt.offsetHeight * 0.15) {
         const from = nxt.offsetTop;
@@ -1497,9 +1947,11 @@
     handle.addEventListener("pointercancel", drop);
   }
 
+  // ═════════════ START ═════════════
   setView("library");
-  if (!store.get("unwrapped", false) && A.welcome) showOnboarding();
-  setTimeout(keepAllInMemory, 1500);
+  if (!loggedIn) showGift(unseen() || STORIES[STORIES.length - 1], "locked");
+  else if (unseen()) showGift(unseen(), "new");
+  setTimeout(() => ALBUMS[0] && memorizeAll(albumList(ALBUMS[0])), 1500);
 
   // ── Offline ──
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
@@ -1512,14 +1964,14 @@
       if (hadWorker && current < 0 && $("onboard").hidden) location.reload();
     });
     // Versioned URL + no HTTP cache, so a new version is always picked up
-    navigator.serviceWorker.register("sw.js?v=" + A.version, { updateViaCache: "none" });
+    navigator.serviceWorker.register("sw.js?v=" + APP.version, { updateViaCache: "none" });
     // Turn the download icon green once every song is saved on the phone
     const checkSaved = async () => {
       try {
-        const hits = await Promise.all(A.tracks.map((t) => caches.match(t.file, { ignoreSearch: true })));
+        const hits = await Promise.all(T.map((t) => caches.match(t.file, { ignoreSearch: true })));
         $("saved").classList.toggle("ok", hits.every(Boolean));
         const n = hits.filter(Boolean).length;
-        $("dlStatus").textContent = n === N ? `All ${N} songs saved on this phone` : `${n} of ${N} songs saved`;
+        $("dlStatus").textContent = n === T.length ? `All ${T.length} songs saved on this phone` : `${n} of ${T.length} songs saved`;
       } catch (e) {}
     };
     navigator.serviceWorker.ready.then(checkSaved);
