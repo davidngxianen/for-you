@@ -580,13 +580,13 @@
 
   <main class="view" id="albumView" hidden>
   <div class="topbar" id="topbar">
-    <button class="head-btn settings-btn" aria-label="Settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="head-btn back-btn" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <b id="topTitle"></b>
     <button class="head-btn lib-btn" aria-label="Your Library"><svg class="ico" viewBox="0 0 24 24"><path d="M4 3.5v17M9.5 3.5v17M14.5 4l5.5 16.5"/></svg></button>
   </div>
 
   <section class="album-head">
-    <button class="head-btn l settings-btn" aria-label="Settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="head-btn l back-btn" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <button class="head-btn r lib-btn" aria-label="Your Library"><svg class="ico" viewBox="0 0 24 24"><path d="M4 3.5v17M9.5 3.5v17M14.5 4l5.5 16.5"/></svg></button>
     <div class="album-cover" id="coverBox"></div>
     <h1 class="album-title" id="title"></h1>
@@ -988,7 +988,19 @@
     return li;
   }
 
-  function openCol(c) { viewCol = c; renderCol(); setView("album"); }
+  // Pages opened from another page (a playlist → "Go to album") remember the way back
+  let backStack = [];
+  function openCol(c) {
+    if (view === "album" && viewCol && !sameCol(viewCol, c)) backStack.push(viewCol);
+    viewCol = c; renderCol(); setView("album");
+  }
+  function goBack() {
+    const c = backStack.pop();
+    if (!c) return setView("library");
+    viewCol = c; renderCol();
+    if (viewCol) setView("album");
+  }
+  $$(".back-btn").forEach((b) => (b.onclick = goBack));
   function renderCol() {
     const c = viewCol;
     if (!c) return;
@@ -1615,6 +1627,7 @@
   let libFilter = null;      // null (albums + playlists), "albums", "playlists" or "archive"
   function setView(v) {
     view = v;
+    if (v === "library") backStack = [];
     $("libView").hidden = v !== "library";
     $("albumView").hidden = v !== "album";
     const el = v === "album" ? $("albumView") : $("libView");
@@ -1799,7 +1812,6 @@
   const openPanel = (id) => { $(id).classList.add("open"); $(id).setAttribute("aria-hidden", "false"); $("scrim").classList.add("show"); };
   $("scrim").onclick = closeAll;
   $("pfpBtn").onclick = () => openPanel("drawer");
-  $$(".settings-btn").forEach((b) => (b.onclick = () => openPanel("drawer")));
   $("dArchive").onclick = () => { closeAll(); libFilter = "archive"; setView("library"); };
   $("logout").onclick = () => {
     closeAll();
