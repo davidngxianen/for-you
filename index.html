@@ -344,6 +344,8 @@
   .chip { cursor: pointer; }
   .lib-item .art-add { border-radius: 50%; background: #2a2a2a; display: grid; place-items: center; }
   .lib-item .art-add .ico { width: 30px; height: 30px; }
+  .lib-item > div:nth-child(2) { flex: 1; min-width: 0; }
+  .lib-item .more { color: var(--muted); padding: 10px 0 10px 10px; flex: none; }
   .lib-empty { color: var(--muted); font-size: 14px; padding: 24px 0; text-align: center; }
 
   /* ── Empty album / playlist ── */
@@ -697,6 +699,8 @@
   <button class="s-item" id="sEditOrder"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h11M4 12h11M4 17h11M19 5v14M16.5 7.5 19 5l2.5 2.5M16.5 16.5 19 19l2.5-2.5"/></svg>Edit song order</button>
   <button class="s-item" id="sResetOrder" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Reset to original order</button>
   <button class="s-item" id="sAddSongs" hidden><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/></svg>Add songs</button>
+  <button class="s-item" id="sPic" hidden><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>Change picture</button>
+  <button class="s-item" id="sPicRemove" hidden><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 4l16 16"/></svg>Remove picture</button>
   <button class="s-item" id="sRename" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg>Rename</button>
   <button class="s-item" id="sDelete" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Delete playlist</button>
 </div>
@@ -711,6 +715,8 @@
   <div class="edit-tip" id="editTip">Drag ≡ to move a song</div>
   <ol class="edit-list" id="editList"></ol>
 </section>
+
+<input type="file" id="picInput" accept="image/*" hidden>
 
 <!-- Add songs to a playlist -->
 <section class="edit" id="picker" aria-hidden="true" aria-label="Add songs">
@@ -828,6 +834,9 @@
   let playlists = store.get("playlists", []);   // [{ id, name, files: [...] }]
   const savePlaylists = () => store.set("playlists", playlists);
   const getPl = (id) => playlists.find((p) => p.id === id);
+  // A playlist's own picture, if one was chosen (saved under its own key)
+  const picKey = (id) => "plpic:" + id;
+  const picOf = (id) => { try { return localStorage.getItem(picKey(id)); } catch (e) { return null; } };
 
   // A collection is anything a song list is shown or played from: { type: "album" | "playlist", id }
   const sameCol = (a, b) => !!a && !!b && a.type === b.type && a.id === b.id;
@@ -841,6 +850,8 @@
   // Cover for a collection: the album's own, or a playlist's first cover / a 2×2 mosaic
   function coversOf(c) {
     if (c.type === "album") return [getAlbum(c.id).cover];
+    const pic = picOf(c.id);
+    if (pic) return [pic];
     return [...new Set(listOf(c).map((g) => T[g].album.cover))];
   }
   function artHTML(c) {
@@ -1621,6 +1632,13 @@
     li.querySelector(".a span").textContent = sub;
     if (extra.col) { li.dataset.type = extra.col.type; li.dataset.id = extra.col.id; }
     li.onclick = onClick;
+    if (extra.more) {
+      const b = document.createElement("button");
+      b.className = "more"; b.setAttribute("aria-label", `More options for ${title}`);
+      b.innerHTML = `<svg class="ico fill" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>`;
+      b.onclick = (e) => { e.stopPropagation(); extra.more(); };
+      li.appendChild(b);
+    }
     pressable(li);
     return li;
   }
@@ -1639,7 +1657,7 @@
       if (libFilter !== "albums") {
         playlists.forEach((p) => {
           const c = { type: "playlist", id: p.id };
-          list.appendChild(libItem(artHTML(c), p.name, `Playlist · ${plural(p.files.length, "song")}`, () => openCol(c), { col: c }));
+          list.appendChild(libItem(artHTML(c), p.name, `Playlist · ${plural(p.files.length, "song")}`, () => openCol(c), { col: c, more: () => openColSheet(c) }));
         });
         list.appendChild(libItem(`<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`, "Create playlist", "", () => newPlaylist(), { add: true }));
       }
@@ -1826,42 +1844,82 @@
 
   // Album / playlist ⋯
   const isCustomOrder = (a) => albumList(a).some((g, k) => T[g].file !== a.tracks[k].file);
-  $("albumMore").onclick = () => {
-    const c = viewCol, a = c.type === "album" && getAlbum(c.id);
+  let sheetCol = null;
+  $("albumMore").onclick = () => openColSheet(viewCol);
+  function openColSheet(c) {
+    sheetCol = c;
+    const a = c.type === "album" && getAlbum(c.id);
     $("aSheetCover").outerHTML = `<div class="art" id="aSheetCover" style="width:48px;height:48px;flex:none">${artHTML(c)}</div>`;
     $("aSheetTitle").textContent = colName(c);
     $("aSheetSub").textContent = a ? `Album · ${a.artist}` : `Playlist · ${profile}`;
     $("sEditOrder").hidden = a ? a.tracks.length < 2 : false;
     $("sEditOrder").lastChild.textContent = a ? "Edit song order" : "Edit playlist";
     $("sResetOrder").hidden = !a || !isCustomOrder(a);
-    ["sAddSongs", "sRename", "sDelete"].forEach((id) => ($(id).hidden = !!a));
+    ["sAddSongs", "sPic", "sRename", "sDelete"].forEach((id) => ($(id).hidden = !!a));
+    $("sPicRemove").hidden = !!a || !picOf(c.id);
     openPanel("albumSheet");
-  };
+  }
+  // Re-draw whatever shows this playlist after a change
+  function redrawCol(c) {
+    if (view === "album" && sameCol(viewCol, c)) renderCol();
+    if (view === "library") renderLib();
+    if (sameCol(ctx, c)) $("npAlbum").textContent = colName(c);
+  }
   $("sResetOrder").onclick = () => {
     closeAll();
-    delete orders[viewCol.id]; store.set("songOrders", orders);
+    delete orders[sheetCol.id]; store.set("songOrders", orders);
     refreshOrder(viewCol); renderCol();
     toast("Back to the original order");
   };
-  $("sEditOrder").onclick = () => { closeAll(); openEdit(); };
-  $("sAddSongs").onclick = () => openPicker(viewCol.id);
+  // Editing happens on the playlist's own page, so open it first when coming from the Library
+  const onPage = (c) => { if (!(view === "album" && sameCol(viewCol, c))) openCol(c); };
+  $("sEditOrder").onclick = () => { closeAll(); onPage(sheetCol); openEdit(); };
+  $("sAddSongs").onclick = () => { onPage(sheetCol); openPicker(sheetCol.id); };
   $("sRename").onclick = () => {
-    const p = getPl(viewCol.id);
+    const c = sheetCol, p = getPl(c.id);
     closeAll();
-    openDlg({ title: "Rename playlist", value: p.name, ok: "Save", onOk(name) { p.name = name; savePlaylists(); renderCol(); if (sameCol(ctx, viewCol)) $("npAlbum").textContent = name; } });
+    openDlg({ title: "Rename playlist", value: p.name, ok: "Save", onOk(name) { p.name = name; savePlaylists(); redrawCol(c); } });
   };
   $("sDelete").onclick = () => {
-    const p = getPl(viewCol.id);
+    const c = sheetCol, p = getPl(c.id);
     closeAll();
     openDlg({
       title: `Delete ${p.name}?`, text: "The songs stay in their albums.", ok: "Delete", input: false,
       onOk() {
         playlists = playlists.filter((x) => x !== p); savePlaylists();
-        refreshOrder({ type: "playlist", id: p.id });
-        viewCol = null; setView("library");
+        try { localStorage.removeItem(picKey(p.id)); } catch (e) {}
+        refreshOrder(c);
+        if (sameCol(viewCol, c)) viewCol = null;
+        setView("library");
         toast("Playlist deleted");
       },
     });
+  };
+
+  // Change picture: any photo from the phone, cropped to a square
+  let picFor = null;
+  $("sPic").onclick = () => { picFor = sheetCol; closeAll(); $("picInput").value = ""; $("picInput").click(); };
+  $("picInput").onchange = async () => {
+    const f = $("picInput").files[0], c = picFor;
+    if (!f || !c) return;
+    try {
+      const url = URL.createObjectURL(f);
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      const S = 600, side = Math.min(img.naturalWidth, img.naturalHeight);
+      const cv = document.createElement("canvas"); cv.width = cv.height = S;
+      cv.getContext("2d").drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, S, S);
+      URL.revokeObjectURL(url);
+      localStorage.setItem(picKey(c.id), cv.toDataURL("image/jpeg", 0.85));
+      redrawCol(c);
+      toast("Picture updated");
+    } catch (e) { toast("Couldn't use that picture"); }
+  };
+  $("sPicRemove").onclick = () => {
+    const c = sheetCol;
+    closeAll();
+    try { localStorage.removeItem(picKey(c.id)); } catch (e) {}
+    redrawCol(c);
+    toast("Picture removed");
   };
 
   // ── Edit an album's song order, or a playlist's order and songs ──

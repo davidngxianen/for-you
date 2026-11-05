@@ -35,7 +35,7 @@ Each entry under `stories` in `album.js` is a Wrapped-style story that ends by r
 Put story photos in `memories/` (portrait looks best; `square: true` for square ones).
 Music doesn't start on its own. The password is a fun lock, not real security.
 
-Playlists are made on the phone itself (Library → +, or a song's ⋯ → Add to playlist) and are saved on that phone only.
+Playlists are made on the phone itself (Library → +, or a song's ⋯ → Add to playlist) and are saved on that phone only. A playlist's ⋯ (in the Library or on its page) can change its picture to any photo, rename it or delete it.
 
 ## 3. Put it online (free, private link) – GitHub Pages
 
