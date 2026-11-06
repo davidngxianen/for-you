@@ -86,11 +86,11 @@ self.APP = {
       album: "shiyi",
       since: "2025-10-05",           // the day we got together
       months: 11,                    // {days} counts from `since` to this many months later
-      gift: { heading: "Something new is waiting for you", opened: "Happy 11 monthsary, {to}!", inside: "memories/11/collage.jpg" },
+      gift: { heading: "Something new is waiting for you", opened: "Happy 11 monthsary, {to}!", inside: "memories/11/first.jpg" },
       slides: [
-        { color: "pink",   photo: "memories/11/collage.jpg", square: true, kicker: "Hey {to}, it's your 11-month Wrapped", big: "Happy 11 monthsary!", small: "Eleven months of us. Let's see how we did." },
+        { color: "pink",   photo: "memories/11/first.jpg", square: true, kicker: "Hey {to}, it's your 11-month Wrapped", big: "Happy 11 monthsary!", small: "Eleven months of us. Let's see how we did." },
         { color: "lime",   kicker: "Time spent together", big: "{days} days", small: "…and I'd happily do every single one again." },
-        { color: "orange", photo: "memories/11/top.jpg", date: "[date]", kicker: "Top memory this month", big: "[Memory name]", small: "[One line about what happened]" },
+        { color: "orange", photo: "memories/11/top.jpg", date: "[date]", kicker: "Top memory this month (for now)", big: "[Memory name]", small: "[One line about what happened]" },
         { color: "blue",   kicker: "Most-said phrase", big: "“你要睡觉了吗?”", small: "Said roughly a million times. Still fun every time." },
         { color: "green",  photo: "memories/11/spot.jpg", kicker: "Our most-visited spot", big: "[Place name]", small: "[Why we keep going back]" },
         { color: "purple", kicker: "Things I love about you", big: "Too many to count", small: "But today it's everything, everything and everything." },
