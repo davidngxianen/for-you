@@ -84,16 +84,16 @@ self.APP = {
       title: "Happy 11 monthsary",
       label: "11 monthsary",
       album: "shiyi",
-      since: "",                     // the day we got together, e.g. "2025-12-05"
+      since: "2025-10-05",           // the day we got together
       months: 11,                    // {days} counts from `since` to this many months later
       gift: { heading: "Something new is waiting for you", opened: "Happy 11 monthsary, {to}!", inside: "memories/11/collage.jpg" },
       slides: [
         { color: "pink",   photo: "memories/11/collage.jpg", square: true, kicker: "Hey {to}, it's your 11-month Wrapped", big: "Happy 11 monthsary!", small: "Eleven months of us. Let's see how we did." },
         { color: "lime",   kicker: "Time spent together", big: "{days} days", small: "…and I'd happily do every single one again." },
         { color: "orange", photo: "memories/11/top.jpg", date: "[date]", kicker: "Top memory this month", big: "[Memory name]", small: "[One line about what happened]" },
-        { color: "blue",   kicker: "Most-said phrase", big: "“[inside joke]”", small: "Said roughly a million times. Still funny every time." },
+        { color: "blue",   kicker: "Most-said phrase", big: "“你要睡觉了吗?”", small: "Said roughly a million times. Still fun every time." },
         { color: "green",  photo: "memories/11/spot.jpg", kicker: "Our most-visited spot", big: "[Place name]", small: "[Why we keep going back]" },
-        { color: "purple", kicker: "Things I love about you", big: "Too many to count", small: "But today it's [thing 1], [thing 2] and [thing 3]." },
+        { color: "purple", kicker: "Things I love about you", big: "Too many to count", small: "But today it's everything, everything and everything." },
         { color: "orange", kicker: "Coming up next", big: "Month 12", small: "One more month and it's a whole year. I can't wait." },
         { color: "blue",   kicker: "Eleven months in, and it still feels like…", big: "Day one.", small: "So I put it into songs…" },
         { color: "red",    type: "final", kicker: "…a brand-new album, just for you", button: "Open the album" },
