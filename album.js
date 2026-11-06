@@ -5,7 +5,7 @@
 //  installed the app download the new files.
 // ───────────────────────────────────────────────────────────────
 self.APP = {
-  version: 29,
+  version: 30,
 
   // ── Log-in screen (the wrapped gift + password) ──
   welcome: {
@@ -45,7 +45,9 @@ self.APP = {
       dedication: "Eleven months in, and it still feels like day one.",
       cover: "covers/shiyi.jpg",   // plus covers/shiyi-512.jpg
       tracks: [
-        // { title: "Song name", file: "audio/shiyi/01.mp3" },
+        { title: "怎麼了", file: "audio/shiyi/01.mp3" },
+        { title: "至少我還記得", file: "audio/shiyi/02.mp3" },
+        { title: "我很快樂", file: "audio/shiyi/03.mp3" },
       ],
     },
   ],
