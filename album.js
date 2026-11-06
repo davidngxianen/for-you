@@ -90,9 +90,9 @@ self.APP = {
       slides: [
         { color: "pink",   photo: "memories/11/first.jpg", square: true, kicker: "Hey {to}, it's your 11-month Wrapped", big: "Happy 11 monthsary!", small: "Eleven months of us. Let's see how we did." },
         { color: "lime",   kicker: "Time spent together", big: "{days} days", small: "…and I'd happily do every single one again." },
-        { color: "orange", photo: "memories/11/top.jpg", date: "[date]", kicker: "Top memory this month (for now)", big: "[Memory name]", small: "[One line about what happened]" },
+        { color: "orange", photo: "memories/11/top.jpg", kicker: "Top memory this month (for now)", big: "Your 28th birthday", small: "The night you opened my present and cried. Happy tears only (I checked)." },
         { color: "blue",   kicker: "Most-said phrase", big: "“你要睡觉了吗?”", small: "Said roughly a million times. Still fun every time." },
-        { color: "green",  photo: "memories/11/spot.jpg", kicker: "Our most-visited spot", big: "[Place name]", small: "[Why we keep going back]" },
+        { color: "green",  photo: "memories/11/spot.jpg", kicker: "Our most-visited spot", big: "Massage places", small: "We say it's for our sore backs. It's 100% for the matching robes." },
         { color: "purple", kicker: "Things I love about you", big: "Too many to count", small: "But today it's everything, everything and everything." },
         { color: "orange", kicker: "Coming up next", big: "Month 12", small: "One more month and it's a whole year. I can't wait." },
         { color: "blue",   kicker: "Eleven months in, and it still feels like…", big: "Day one.", small: "So I put it into songs…" },
